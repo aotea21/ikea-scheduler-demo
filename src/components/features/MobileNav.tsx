@@ -1,14 +1,14 @@
-import { Briefcase, Calendar, LayoutDashboard, Map as MapIcon, Settings, Users } from "lucide-react";
+import { Briefcase, Calendar, LayoutDashboard, Map as MapIcon, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/' },
-    { label: 'Map', icon: MapIcon, href: '/map' },
+    { label: 'Schedule', icon: Calendar, href: '/schedule' },
     { label: 'Orders', icon: Briefcase, href: '/orders' },
+    { label: 'Map', icon: MapIcon, href: '/map' },
     { label: 'Assemblers', icon: Users, href: '/assemblers' },
-    { label: 'More', icon: Settings, href: '/settings' },
 ];
 
 export function MobileNav() {
