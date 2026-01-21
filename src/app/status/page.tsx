@@ -10,25 +10,28 @@ import { JobEventType } from "@/lib/types";
 // Helper to get icon for event type
 const getEventIcon = (type: JobEventType) => {
     switch (type) {
-        case 'job_created': return <Circle className="w-5 h-5 text-gray-400" />;
-        case 'worker_assigned': return <CheckCircle2 className="w-5 h-5 text-blue-500" />;
-        case 'worker_enroute': return <Truck className="w-5 h-5 text-blue-600" />;
-        case 'job_started': return <Clock className="w-5 h-5 text-orange-500" />;
-        case 'job_completed': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-        case 'issue_reported': return <AlertCircle className="w-5 h-5 text-red-500" />;
+        // case 'job_created': return <Circle className="w-5 h-5 text-gray-400" />; // No longer in SQL schema
+        case 'ASSIGNED': return <CheckCircle2 className="w-5 h-5 text-blue-500" />;
+        case 'EN_ROUTE': return <Truck className="w-5 h-5 text-blue-600" />;
+        case 'STARTED': return <Clock className="w-5 h-5 text-orange-500" />;
+        case 'COMPLETED': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
+        case 'ISSUE_REPORTED': return <AlertCircle className="w-5 h-5 text-red-500" />;
+        case 'PAUSED': return <Circle className="w-5 h-5 text-yellow-500" />;
+        case 'RESUMED': return <Circle className="w-5 h-5 text-green-500" />;
         default: return <Circle className="w-5 h-5 text-gray-300" />;
     }
 };
 
 const getEventLabel = (type: JobEventType) => {
     switch (type) {
-        case 'job_created': return 'Job Created';
-        case 'worker_assigned': return 'Worker Assigned';
-        case 'worker_enroute': return 'En Route';
-        case 'job_started': return 'Job Started';
-        case 'job_completed': return 'Completed';
-        case 'issue_reported': return 'Issue Reported';
-        default: return type;
+        case 'ASSIGNED': return 'Worker Assigned';
+        case 'EN_ROUTE': return 'En Route';
+        case 'STARTED': return 'Job Started';
+        case 'COMPLETED': return 'Completed';
+        case 'ISSUE_REPORTED': return 'Issue Reported';
+        case 'PAUSED': return 'Paused';
+        case 'RESUMED': return 'Resumed';
+        default: return (type as string).replace(/_/g, ' ');
     }
 };
 
@@ -55,7 +58,7 @@ export default function StatusPage() {
                                             <CardTitle className="text-lg">Order #{task.orderId.toUpperCase()}</CardTitle>
                                             <p className="text-sm text-gray-500 mt-1">{order?.customerName}</p>
                                         </div>
-                                        <Badge variant={latestEvent?.type === 'issue_reported' ? 'destructive' : 'secondary'}>
+                                        <Badge variant={latestEvent?.type === 'ISSUE_REPORTED' ? 'destructive' : 'secondary'}>
                                             {task.status}
                                         </Badge>
                                     </div>

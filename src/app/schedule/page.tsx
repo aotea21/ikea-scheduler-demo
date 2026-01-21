@@ -35,28 +35,39 @@ export default function SchedulePage() {
                             </div>
                         ) : (
                             assignedTasks.map(task => {
-                                const assembler = assemblers.find(a => a.id === task.assignedAssemblerId);
+                                // Find assemblers
+                                const assignedAssemblers = assemblers.filter(a => task.assignedAssemblerIds.includes(a.id));
+
                                 return (
-                                    <Card key={task.id} className="border-l-4 border-l-[#0058a3]">
-                                        <CardHeader className="pb-2">
-                                            <CardTitle className="text-base font-medium flex justify-between">
-                                                <span>Order #{task.orderId.toUpperCase()}</span>
-                                                <Badge className="bg-[#0058a3] hover:bg-[#004885]">
-                                                    {task.scheduledTime ? new Date(task.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
-                                                </Badge>
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="text-sm space-y-2">
-                                            <div className="flex items-center gap-2 text-gray-600">
-                                                <User className="w-4 h-4" />
-                                                <span>{assembler?.name || 'Unknown Assembler'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-gray-600">
-                                                <Clock className="w-4 h-4" />
-                                                <span>{task.estimatedDurationMinutes} mins est.</span>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                    <div key={task.id} className="mb-4">
+                                        <Card className="border-l-4 border-l-[#0058a3]">
+                                            <CardHeader className="pb-2">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <CardTitle className="text-sm font-medium">Task #{task.orderId}</CardTitle>
+                                                        <CardDescription>{task.skillRequired} • {task.estimatedDurationMinutes} min</CardDescription>
+                                                    </div>
+                                                    <Badge variant={task.status === 'IN_PROGRESS' ? 'default' : 'secondary'}>
+                                                        {task.status}
+                                                    </Badge>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="text-xs text-gray-500 mb-2">
+                                                    {task.scheduledStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+                                                    {task.scheduledEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                                <div className="flex items-center gap-2 text-sm font-medium">
+                                                    <User className="h-4 w-4 text-gray-400" />
+                                                    {assignedAssemblers.length > 0 ? (
+                                                        <span>{assignedAssemblers.map(a => a.name).join(', ')}</span>
+                                                    ) : (
+                                                        <span className="text-red-500">Unassigned (Error)</span>
+                                                    )}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
                                 );
                             })
                         )}

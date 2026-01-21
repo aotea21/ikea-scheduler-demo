@@ -19,52 +19,88 @@ export interface Item {
 }
 
 export interface Order {
-  id: string;
+  id: string; // UUID
   customerName: string;
   address: Location;
   items: Item[];
-  deliveryWindow: TimeRange;
-  // New Fields
-  phone: string;
+
+  // New Fields matching SQL Schema
+  customerPhone: string; // was phone
+  deliveryFrom: Date; // was deliveryWindow.start
+  deliveryTo: Date; // was deliveryWindow.end
+
+  location?: Location; // SQL says location is in Orders
+  status: 'DELIVERED' | 'CANCELLED'; // SQL Enum
+
+  // Legacy/UI fields (keeping for compatibility/mockData for now, but should ideally map)
   email: string;
-  deliveryDate: string; // YYYY-MM-DD
-  assemblyWindow: string; // e.g. "09:00 - 12:00"
-  estimatedTime: number; // minutes
+  assemblyWindow: string;
+  estimatedTime: number;
   serviceFee: number;
   notes?: string;
+  deliveryDate: string; // Keeping for UI display convenience
 }
 
-export type TaskStatus = 'OPEN' | 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type TaskStatus = 'OPEN' | 'ASSIGNED' | 'EN_ROUTE' | 'IN_PROGRESS' | 'COMPLETED' | 'ISSUE';
 
-
-export type JobEventType = 'job_created' | 'worker_assigned' | 'worker_enroute' | 'job_started' | 'job_completed' | 'issue_reported';
+export type JobEventType = 'ASSIGNED' | 'EN_ROUTE' | 'STARTED' | 'PAUSED' | 'RESUMED' | 'COMPLETED' | 'ISSUE_REPORTED';
 
 export interface JobEvent {
-  type: JobEventType;
-  timestamp: Date;
-  description: string;
+  id: string; // UUID
+  taskId: string;
+  type: JobEventType; // Uppercase Enum
+  eventTime: Date; // SQL column
+  location?: Location;
+  metadata?: any; // JSONB
+
+  // Legacy/UI
+  timestamp: Date; // Mapping eventTime to this for UI compatibility if needed, or update UI
+  description?: string;
 }
 
 export interface AssemblyTask {
-  id: string;
+  id: string; // UUID
   orderId: string;
   status: TaskStatus;
-  requiredSkills: SkillLevel;
+  skillRequired: SkillLevel; // SQL column
+
+  // Planning
+  scheduledStart?: Date;
+  scheduledEnd?: Date;
+
+  // Execution
+  actualStart?: Date;
+  actualEnd?: Date;
+
+  assignedAssemblerIds: string[]; // SQL column (was assemblerId, previously assignedAssemblerId)
+  createdAt: Date;
+
+  // Legacy/UI
+  requiredSkills: SkillLevel; // Mapping to skillRequired
   estimatedDurationMinutes: number;
-  assignedAssemblerId: string | null;
   scheduledTime: Date | null;
   history: JobEvent[];
 }
 
 export interface Assembler {
-  id: string;
+  id: string; // UUID (user_id)
   name: string;
-  avatarUrl?: string; // For UI
-  skills: SkillLevel[];
-  rating: number; // 0-5
+  avatarUrl?: string;
+  rating: number;
+  ratingCount: number;
   currentLocation: Location;
+
+  // Relations
+  skills: SkillLevel[];
   availability: TimeRange[];
+
   activeTaskId: string | null;
+
+  // SQL Columns
+  isActive: boolean;
+  lastSeenAt: Date;
+  mobileNumberPrimary: string;
+  mobileNumberSecondary?: string;
 }
 
 export interface AssignmentRecommendation {

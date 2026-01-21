@@ -52,7 +52,7 @@ export default function OrdersPage() {
                                         <TableCell>{order.customerName}</TableCell>
                                         <TableCell>
                                             <div className="flex flex-col text-sm">
-                                                <span>{order.phone}</span>
+                                                <span>{order.customerPhone}</span>
                                                 <span className="text-gray-500 text-xs">{order.email}</span>
                                             </div>
                                         </TableCell>

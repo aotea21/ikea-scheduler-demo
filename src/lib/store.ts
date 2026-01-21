@@ -13,7 +13,7 @@ interface AppState {
     setTasks: (tasks: AssemblyTask[]) => void;
     setAssemblers: (assemblers: Assembler[]) => void;
     selectTask: (taskId: string | null) => void;
-    assignAssembler: (taskId: string, assemblerId: string) => void;
+    assignAssembler: (taskId: string, assemblerIds: string[]) => void;
     resetDemo: () => void;
 }
 
@@ -28,17 +28,17 @@ export const useStore = create<AppState>((set) => ({
     setAssemblers: (assemblers) => set({ assemblers }),
     selectTask: (selectedTaskId) => set({ selectedTaskId }),
 
-    assignAssembler: (taskId, assemblerId) => set((state) => {
+    assignAssembler: (taskId, assemblerIds) => set((state) => {
         // 1. Update the Task
         const updatedTasks = state.tasks.map(t =>
             t.id === taskId
-                ? { ...t, status: 'ASSIGNED' as const, assignedAssemblerId: assemblerId, scheduledTime: new Date() }
+                ? { ...t, status: 'ASSIGNED' as const, assignedAssemblerIds: assemblerIds, scheduledTime: new Date() }
                 : t
         );
 
-        // 2. Update the Assembler (Mark as busy/active)
+        // 2. Update the Assemblers (Mark as busy/active)
         const updatedAssemblers = state.assemblers.map(a =>
-            a.id === assemblerId
+            assemblerIds.includes(a.id)
                 ? { ...a, activeTaskId: taskId }
                 : a
         );

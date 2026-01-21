@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from 'react';
 
 import { useStore } from "@/lib/store";
 import { generateRecommendations } from "@/lib/scheduler";
@@ -14,18 +15,41 @@ import { cn } from "@/lib/utils";
 
 export function AssignmentModal() {
     const { tasks, orders, assemblers, selectedTaskId, selectTask, assignAssembler } = useStore();
+    const [selectedAssemblerIds, setSelectedAssemblerIds] = useState<string[]>([]);
+    const [showAll, setShowAll] = useState(false);
+
+    // Reset selection when modal opens
+    useEffect(() => {
+        if (selectedTaskId) {
+            setSelectedAssemblerIds([]);
+            setShowAll(false);
+        }
+    }, [selectedTaskId]);
 
     if (!selectedTaskId) return null;
 
     const task = tasks.find(t => t.id === selectedTaskId);
-    if (!task || task.status !== 'OPEN') return null; // Only show for OPEN tasks? Or maybe show details for others. 
-    // Requirement: "Assignment Recommendation Modal". Usually for assigning.
+    if (!task || task.status !== 'OPEN') return null;
 
     const order = orders.find(o => o.id === task.orderId);
     if (!order) return null;
 
     const recommendations = generateRecommendations(task, assemblers, order.address);
-    const topRecommendation = recommendations[0];
+    // Logic: Show top 3 by default, or all if showAll is true
+    const visibleRecommendations = showAll ? recommendations : recommendations.slice(0, 3);
+    const hasMore = recommendations.length > 3;
+
+    const toggleAssembler = (id: string) => {
+        setSelectedAssemblerIds(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
+    const handleConfirm = () => {
+        if (selectedAssemblerIds.length > 0) {
+            assignAssembler(task.id, selectedAssemblerIds);
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200">
@@ -34,7 +58,7 @@ export function AssignmentModal() {
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b bg-gray-50">
                     <div>
-                        <h2 className="text-xl font-bold text-[#111111]">Assign Task #{order.id}</h2>
+                        <h2 className="text-xl font-bold text-[#111111]">Select Assemblers ({selectedAssemblerIds.length})</h2>
                         <p className="text-sm text-gray-500 mt-1">{order.items[0].name} • {order.address.address}</p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => selectTask(null)}>
@@ -53,19 +77,40 @@ export function AssignmentModal() {
                             </div>
                         )}
 
-                        {recommendations.map((rec, idx) => {
+                        {visibleRecommendations.map((rec, idx) => {
+                            const isTopMatch = idx < 3;
                             const isBest = idx === 0;
+                            const isSelected = selectedAssemblerIds.includes(rec.assembler.id);
+
                             return (
                                 <div
                                     key={rec.assembler.id}
+                                    onClick={() => toggleAssembler(rec.assembler.id)}
                                     className={cn(
-                                        "flex items-center justify-between p-4 rounded-lg border hover:border-[#0058a3] transition-colors",
-                                        isBest ? "border-[#fbd914] bg-yellow-50/10 shadow-sm" : "border-gray-200"
+                                        "flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-all",
+                                        isSelected
+                                            ? "border-[#0058a3] bg-blue-50 ring-1 ring-[#0058a3]"
+                                            : isTopMatch
+                                                ? "border-[#fbd914] bg-yellow-50/10"
+                                                : "border-gray-200 hover:border-gray-300"
                                     )}
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+
+                                        <div className={cn(
+                                            "h-6 w-6 rounded border flex items-center justify-center transition-colors",
+                                            isSelected ? "bg-[#0058a3] border-[#0058a3]" : "border-gray-300 bg-white"
+                                        )}>
+                                            {isSelected && <Check className="h-4 w-4 text-white" />}
+                                        </div>
+
+                                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center relative">
                                             <User className="h-6 w-6 text-gray-500" />
+                                            {isTopMatch && (
+                                                <div className="absolute -top-1 -right-1 bg-[#0058a3] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                                                    {idx + 1}
+                                                </div>
+                                            )}
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -83,27 +128,33 @@ export function AssignmentModal() {
                                             </div>
                                         </div>
                                     </div>
-
-                                    <Button
-                                        size="sm"
-                                        variant={isBest ? "default" : "outline"}
-                                        className={isBest ? "bg-[#0058a3] hover:bg-[#004f93]" : ""}
-                                        onClick={() => assignAssembler(task.id, rec.assembler.id)}
-                                    >
-                                        Assign
-                                    </Button>
                                 </div>
                             );
                         })}
                     </div>
 
+                    {hasMore && !showAll && (
+                        <div className="mt-4 text-center">
+                            <Button variant="outline" size="sm" onClick={() => setShowAll(true)} className="w-full border-dashed text-gray-500">
+                                Show {recommendations.length - 3} More Candidates
+                            </Button>
+                        </div>
+                    )}
+
                     <div className="mt-8 p-4 bg-gray-50 rounded text-xs text-gray-500">
-                        <span className="font-semibold">Logic:</span> Recommendations are based on Distance (30%), Skill Match (50%), and Rating (20%).
+                        <span className="font-semibold">Note:</span> You can now select multiple assemblers for large jobs.
                     </div>
                 </div>
 
                 <div className="p-4 border-t flex justify-end gap-2 bg-gray-50">
                     <Button variant="outline" onClick={() => selectTask(null)}>Cancel</Button>
+                    <Button
+                        disabled={selectedAssemblerIds.length === 0}
+                        onClick={handleConfirm}
+                        className={cn("min-w-[120px]", selectedAssemblerIds.length > 0 ? "bg-[#0058a3] hover:bg-[#004f93]" : "")}
+                    >
+                        Assign {selectedAssemblerIds.length > 0 ? `(${selectedAssemblerIds.length})` : ''}
+                    </Button>
                 </div>
             </div>
         </div>
