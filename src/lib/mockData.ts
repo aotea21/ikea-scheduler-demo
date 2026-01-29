@@ -14,6 +14,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a1',
         name: 'Bjorn Svensson',
+        status: 'AVAILABLE',
         skills: ['EASY', 'MEDIUM', 'HARD'],
         rating: 5.0,
         ratingCount: 124,
@@ -27,6 +28,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a2',
         name: 'Sarah Connor',
+        status: 'AVAILABLE',
         skills: ['EASY', 'MEDIUM'],
         rating: 4.8,
         ratingCount: 89,
@@ -40,6 +42,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a3',
         name: 'Mike Ross',
+        status: 'OFFLINE',
         skills: ['EASY'],
         rating: 3.5,
         ratingCount: 42,
@@ -53,6 +56,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a4',
         name: 'Jessica Pearson',
+        status: 'AVAILABLE',
         skills: ['EASY', 'MEDIUM', 'HARD'],
         rating: 4.9,
         ratingCount: 210,
@@ -66,6 +70,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a5',
         name: 'Louis Litt',
+        status: 'AVAILABLE',
         skills: ['EASY', 'MEDIUM'],
         rating: 4.2,
         ratingCount: 15,
@@ -79,6 +84,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a6',
         name: 'Donna Paulsen',
+        status: 'AVAILABLE',
         skills: ['EASY', 'MEDIUM', 'HARD'],
         rating: 5.0,
         ratingCount: 300,
@@ -92,6 +98,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a7',
         name: 'Rachel Green',
+        status: 'AVAILABLE',
         skills: ['MEDIUM', 'HARD'],
         rating: 4.7,
         ratingCount: 156,
@@ -106,6 +113,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a8',
         name: 'Ross Geller',
+        status: 'AVAILABLE',
         skills: ['EASY', 'MEDIUM', 'HARD'],
         rating: 4.4,
         ratingCount: 78,
@@ -119,6 +127,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a9',
         name: 'Monica Bing',
+        status: 'OFFLINE',
         skills: ['EASY', 'MEDIUM'],
         rating: 4.9,
         ratingCount: 201,
@@ -132,6 +141,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a10',
         name: 'Chandler Bing',
+        status: 'AVAILABLE',
         skills: ['MEDIUM', 'HARD'],
         rating: 4.6,
         ratingCount: 134,
