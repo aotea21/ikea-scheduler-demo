@@ -55,10 +55,10 @@ export function AssignmentModal() {
         ? assemblers.filter(a => task.assignedAssemblerIds?.includes(a.id))
         : [];
 
-    // Logic: Show all assemblers if no recommendations, otherwise show top 3 by default
-    const displayAssemblers = recommendations.length === 0 ? assemblers : recommendations;
-    const visibleAssemblers = showAll ? displayAssemblers : displayAssemblers.slice(0, 3);
-    const hasMore = displayAssemblers.length > 3;
+    // Show top 3 by default, or all if showAll is true
+    // All assemblers are now included in recommendations with varying scores
+    const visibleAssemblers = showAll ? recommendations : recommendations.slice(0, 3);
+    const hasMore = recommendations.length > 3;
 
     const toggleAssembler = (id: string) => {
         setSelectedAssemblerIds(prev =>
@@ -159,7 +159,7 @@ export function AssignmentModal() {
                         </h3>
 
                         <div className="space-y-3">
-                            {displayAssemblers.length === 0 && (
+                            {recommendations.length === 0 && (
                                 <div className="p-8 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed">
                                     No assemblers available.
                                 </div>
@@ -235,7 +235,7 @@ export function AssignmentModal() {
                         {hasMore && !showAll && (
                             <div className="mt-4 text-center">
                                 <Button variant="outline" size="sm" onClick={() => setShowAll(true)} className="w-full border-dashed text-gray-500">
-                                    Show {displayAssemblers.length - 3} More {recommendations.length === 0 ? 'Assemblers' : 'Candidates'}
+                                    Show {recommendations.length - 3} More Assemblers
                                 </Button>
                             </div>
                         )}

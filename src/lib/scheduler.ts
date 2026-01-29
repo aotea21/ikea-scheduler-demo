@@ -43,9 +43,6 @@ function calculateSkillScore(assembler: Assembler, task: AssemblyTask): number {
 
 export function generateRecommendations(task: AssemblyTask, assemblers: Assembler[], taskLocation: { lat: number, lng: number }): AssignmentRecommendation[] {
     return assemblers
-        .filter(a => hasRequiredSkill(a, task.requiredSkills))
-        .filter(a => hasRequiredSkill(a, task.requiredSkills))
-        .filter(a => !a.activeTaskId) // Only free assemblers (null or undefined)
         .map(assembler => {
             const distance = calculateDistance(
                 assembler.currentLocation.lat,
@@ -54,24 +51,35 @@ export function generateRecommendations(task: AssemblyTask, assemblers: Assemble
                 taskLocation.lng
             );
 
-            // Scoring Heuristic
-            // 1. Skill Match (50 points): 
-            //    - Exact match (lowest capable) is good? No, higher skill is fine.
-            //    - Let's say raw capability is binary (filtered above).
-            //    - We give 50 points base for being capable.
-            const skillScore = calculateSkillScore(assembler, task);
-            // Distance score (minimize distance)
+            // Scoring Heuristic - now includes all assemblers but penalizes unsuitable ones
+            let skillScore = 0;
+            const hasSkill = hasRequiredSkill(assembler, task.requiredSkills);
+            if (hasSkill) {
+                skillScore = 50; // Full skill points if qualified
+            } else {
+                skillScore = -100; // Penalty for lacking required skills (still shows but ranked low)
+            }
 
+            // Distance score (minimize distance)
             const distanceScore = Math.max(0, 100 - distance * 2); // Simple decay
+
             // Rating score
             const ratingScore = (assembler.rating / 5) * 100;
 
-            const totalScore = skillScore + distanceScore + ratingScore;
+            // Availability penalty - penalize but don't exclude assemblers with active tasks
+            const availabilityScore = !assembler.activeTaskId ? 50 : -50;
+
+            const totalScore = skillScore + distanceScore + ratingScore + availabilityScore;
 
             const matchReasons = [];
-            if (distance < 5) matchReasons.push('Nearby (< 5km)');
+            if (distance < 5) matchReasons.push('Nearby (<5km)');
             if (assembler.rating >= 4.8) matchReasons.push('Top Rated');
-            if (SKILL_VALUE[task.requiredSkills] === Math.max(...assembler.skills.map(s => SKILL_VALUE[s]))) matchReasons.push('Perfect Skill Match');
+            if (hasSkill && SKILL_VALUE[task.requiredSkills] === Math.max(...assembler.skills.map(s => SKILL_VALUE[s]))) {
+                matchReasons.push('Perfect Skill Match');
+            }
+            if (!assembler.activeTaskId) matchReasons.push('Available');
+            if (!hasSkill) matchReasons.push('⚠️ Skill Gap');
+            if (assembler.activeTaskId) matchReasons.push('⚠️ Busy');
 
             return {
                 assembler,

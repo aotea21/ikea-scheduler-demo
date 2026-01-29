@@ -42,7 +42,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a3',
         name: 'Mike Ross',
-        status: 'OFFLINE',
+        status: 'AVAILABLE',
         skills: ['EASY'],
         rating: 3.5,
         ratingCount: 42,
@@ -127,7 +127,7 @@ export const MOCK_ASSEMBLERS: Assembler[] = [
     {
         id: 'a9',
         name: 'Monica Bing',
-        status: 'OFFLINE',
+        status: 'AVAILABLE',
         skills: ['EASY', 'MEDIUM'],
         rating: 4.9,
         ratingCount: 201,

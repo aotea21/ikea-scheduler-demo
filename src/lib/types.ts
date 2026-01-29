@@ -83,6 +83,8 @@ export interface AssemblyTask {
   history: JobEvent[];
 }
 
+export type AssemblerStatus = 'AVAILABLE' | 'ASSIGNED' | 'EN_ROUTE' | 'WORKING';
+
 export interface Assembler {
   id: string; // UUID (user_id)
   name: string;
@@ -99,7 +101,7 @@ export interface Assembler {
 
   // SQL Columns
   isActive: boolean;
-  status: 'AVAILABLE' | 'BUSY' | 'OFFLINE';
+  status: AssemblerStatus;
   lastSeenAt: Date;
   mobileNumberPrimary: string;
   mobileNumberSecondary?: string;
