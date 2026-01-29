@@ -30,7 +30,7 @@ export interface Order {
   deliveryTo: Date; // was deliveryWindow.end
 
   location?: Location; // SQL says location is in Orders
-  status: 'DELIVERED' | 'CANCELLED'; // SQL Enum
+  status: 'PENDING' | 'CONFIRMED' | 'DELIVERED' | 'CANCELLED'; // SQL Enum
 
   // Legacy/UI fields (keeping for compatibility/mockData for now, but should ideally map)
   email: string;
@@ -51,7 +51,8 @@ export interface JobEvent {
   type: JobEventType; // Uppercase Enum
   eventTime: Date; // SQL column
   location?: Location;
-  metadata?: any; // JSONB
+
+  metadata?: Record<string, unknown>; // JSONB
 
   // Legacy/UI
   timestamp: Date; // Mapping eventTime to this for UI compatibility if needed, or update UI
@@ -98,6 +99,7 @@ export interface Assembler {
 
   // SQL Columns
   isActive: boolean;
+  status: 'AVAILABLE' | 'BUSY' | 'OFFLINE';
   lastSeenAt: Date;
   mobileNumberPrimary: string;
   mobileNumberSecondary?: string;

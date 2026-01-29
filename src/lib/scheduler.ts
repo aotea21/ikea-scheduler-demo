@@ -36,10 +36,16 @@ function hasRequiredSkill(assembler: Assembler, requiredSkill: SkillLevel): bool
     return maxSkillVal >= requiredVal;
 }
 
+function calculateSkillScore(assembler: Assembler, task: AssemblyTask): number {
+    // Base score for validation (already checked by filter)
+    return 50;
+}
+
 export function generateRecommendations(task: AssemblyTask, assemblers: Assembler[], taskLocation: { lat: number, lng: number }): AssignmentRecommendation[] {
     return assemblers
         .filter(a => hasRequiredSkill(a, task.requiredSkills))
-        .filter(a => a.activeTaskId === null) // Only free assemblers
+        .filter(a => hasRequiredSkill(a, task.requiredSkills))
+        .filter(a => !a.activeTaskId) // Only free assemblers (null or undefined)
         .map(assembler => {
             const distance = calculateDistance(
                 assembler.currentLocation.lat,
@@ -53,20 +59,12 @@ export function generateRecommendations(task: AssemblyTask, assemblers: Assemble
             //    - Exact match (lowest capable) is good? No, higher skill is fine.
             //    - Let's say raw capability is binary (filtered above).
             //    - We give 50 points base for being capable.
-            //    - Maybe bonus for 'Best Fit' (not using a PhD for a KALLAX)? 
-            //    - For now, 50 points flat for being qualified.
-            let skillScore = 50;
+            const skillScore = calculateSkillScore(assembler, task);
+            // Distance score (minimize distance)
 
-            // 2. Distance Score (30 points):
-            //    - Closer is better.
-            //    - Max Score at 0km. 0 Score at >50km.
-            //    - Linear drop: 30 * (1 - dist/50). Min 0.
-            let distanceScore = Math.max(0, 30 * (1 - distance / 50));
-
-            // 3. Rating Score (20 points):
-            //    - 5 stars = 20 points.
-            //    - 4 * score.
-            let ratingScore = assembler.rating * 4;
+            const distanceScore = Math.max(0, 100 - distance * 2); // Simple decay
+            // Rating score
+            const ratingScore = (assembler.rating / 5) * 100;
 
             const totalScore = skillScore + distanceScore + ratingScore;
 

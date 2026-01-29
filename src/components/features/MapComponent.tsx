@@ -52,7 +52,14 @@ export default function MapComponent() {
 
     useEffect(() => {
         setIsMounted(true);
-    }, []);
+        console.log('MapComponent Mounted. Data state:', {
+            tasksCount: tasks.length,
+            assemblersCount: assemblers.length,
+            ordersCount: orders.length
+        });
+        if (tasks.length > 0) console.log('Sample Task:', tasks[0]);
+        if (assemblers.length > 0) console.log('Sample Assembler:', assemblers[0]);
+    }, [tasks, assemblers, orders]);
 
     if (!isMounted) return <div className="h-full w-full bg-gray-100 flex items-center justify-center">Loading Map...</div>;
 
@@ -71,42 +78,78 @@ export default function MapComponent() {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 {/* Render Assemblers */}
-                {assemblers.map(a => (
-                    <Marker
-                        key={a.id}
-                        position={[a.currentLocation.lat, a.currentLocation.lng]}
-                        icon={AssemblerIcon}
-                    >
-                        <Popup>
-                            <div className="p-1">
-                                <strong>{a.name}</strong><br />
-                                Rating: {a.rating} ★<br />
-                                Skills: {a.skills.join(', ')}
-                            </div>
-                        </Popup>
-                    </Marker>
-                ))}
+                {assemblers.map(a => {
+                    const lat = a.currentLocation?.lat || 0;
+                    const lng = a.currentLocation?.lng || 0;
+                    if (lat === 0 && lng === 0) return null;
+
+                    return (
+                        <Marker
+                            key={a.id}
+                            position={[lat, lng]}
+                            icon={AssemblerIcon}
+                        >
+                            <Popup>
+                                <div className="p-1 space-y-1">
+                                    <div className="font-bold border-b pb-1">{a.name}</div>
+                                    <div className="text-xs">ID: {a.id.slice(0, 8)}...</div>
+                                    <div className="text-sm font-medium">Rating: {a.rating} ★</div>
+                                    <div className="text-xs text-gray-600">
+                                        Skills: {a.skills?.join(', ') || 'None'}
+                                    </div>
+                                    <div className="text-xs text-blue-600">
+                                        Status: {a.status}
+                                    </div>
+                                    {a.activeTaskId && (
+                                        <div className="text-xs text-orange-600 font-medium">
+                                            Currently Busy
+                                        </div>
+                                    )}
+                                </div>
+                            </Popup>
+                        </Marker>
+                    );
+                })}
 
                 {/* Render Tasks */}
                 {tasks.map(t => {
                     const order = orders.find(o => o.id === t.orderId);
-                    if (!order) return null;
+                    if (!order) {
+                        console.warn(`Map: Task ${t.id} has no matching order ${t.orderId}`);
+                        return null;
+                    }
+
+                    const lat = order.address?.lat || 0;
+                    const lng = order.address?.lng || 0;
+                    if (lat === 0 && lng === 0) return null;
+
                     const isSelected = selectedTaskId === t.id;
+                    const firstItem = order.items?.[0]?.name || 'Unknown IKEA Item';
 
                     return (
                         <Marker
                             key={t.id}
-                            position={[order.address.lat, order.address.lng]}
+                            position={[lat, lng]}
                             icon={isSelected ? SelectedTaskIcon : TaskIcon}
                             eventHandlers={{
                                 click: () => selectTask(t.id),
                             }}
                         >
                             <Popup>
-                                <div className="p-1">
-                                    <strong>Order #{order.id}</strong><br />
-                                    {order.items[0].name}<br />
-                                    Status: {t.status}
+                                <div className="p-1 space-y-1 min-w-[150px]">
+                                    <div className="font-bold text-[#0058a3] border-b pb-1">
+                                        Order #{order.id.slice(0, 8)}
+                                    </div>
+                                    <div className="font-semibold text-sm">{firstItem}</div>
+                                    {order.items?.length > 1 && (
+                                        <div className="text-xs text-gray-500">+{order.items.length - 1} more items</div>
+                                    )}
+                                    <div className="text-xs mt-2 p-1 bg-gray-50 rounded">
+                                        Status: <span className="font-medium">{t.status}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-400 italic mt-1">
+                                        {order.address.address}
+                                    </div>
                                 </div>
                             </Popup>
                         </Marker>

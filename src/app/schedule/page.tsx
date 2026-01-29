@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from "@/components/features/DashboardLayout";
 import { useStore } from "@/lib/store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, User } from "lucide-react";
 
@@ -54,8 +54,8 @@ export default function SchedulePage() {
                                             </CardHeader>
                                             <CardContent>
                                                 <div className="text-xs text-gray-500 mb-2">
-                                                    {task.scheduledStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-                                                    {task.scheduledEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {task.scheduledStart ? new Date(task.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'} -
+                                                    {task.scheduledEnd ? new Date(task.scheduledEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD'}
                                                 </div>
                                                 <div className="flex items-center gap-2 text-sm font-medium">
                                                     <User className="h-4 w-4 text-gray-400" />

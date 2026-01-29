@@ -81,9 +81,22 @@ export function TaskList() {
                                 )}
 
                                 {task.status === 'ASSIGNED' && (
-                                    <div className="mt-2 text-xs font-medium text-green-600 bg-green-50 p-2 rounded flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                                        Assigned to {task.assignedAssemblerId}
+                                    <div className="mt-2 flex items-center justify-between">
+                                        <div className="text-xs font-medium text-green-600 bg-green-50 p-2 rounded flex items-center gap-2 flex-1 mr-2">
+                                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                                            Assigned ({task.assignedAssemblerIds?.length || 0})
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="text-xs h-8"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                selectTask(task.id);
+                                            }}
+                                        >
+                                            Change
+                                        </Button>
                                     </div>
                                 )}
                             </CardContent>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { DashboardLayout } from "@/components/features/DashboardLayout";
 import { useStore } from "@/lib/store";
 import {
@@ -12,18 +13,28 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { CreateOrderModal } from "@/components/features/CreateOrderModal";
 
 export default function OrdersPage() {
     const { orders } = useStore();
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     return (
         <DashboardLayout>
             <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
                 <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-2xl font-bold text-[#111111]">All Orders</h1>
-                    <Badge variant="outline" className="text-sm px-3 py-1">
-                        Total Orders: {orders.length}
-                    </Badge>
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-2xl font-bold text-[#111111]">All Orders</h1>
+                        <Badge variant="outline" className="text-sm px-3 py-1">
+                            Total Orders: {orders.length}
+                        </Badge>
+                    </div>
+                    <Button onClick={() => setIsCreateModalOpen(true)} className="bg-[#0058a3] hover:bg-[#004f93]">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Order
+                    </Button>
                 </div>
 
                 <Card className="bg-white overflow-hidden shadow-sm border border-gray-200">
@@ -47,7 +58,7 @@ export default function OrdersPage() {
                                 {orders.map((order) => (
                                     <TableRow key={order.id} className="hover:bg-blue-50/50 transition-colors">
                                         <TableCell className="font-medium text-[#0058a3]">
-                                            #{order.id.toUpperCase()}
+                                            #{order.id.slice(0, 8).toUpperCase()}
                                         </TableCell>
                                         <TableCell>{order.customerName}</TableCell>
                                         <TableCell>
@@ -61,20 +72,20 @@ export default function OrdersPage() {
                                         <TableCell>{order.assemblyWindow}</TableCell>
                                         <TableCell>
                                             <div className="flex flex-col gap-1">
-                                                {order.items.map((item, idx) => (
+                                                {(order.items || []).map((item, idx) => (
                                                     <div key={idx} className="text-sm">
                                                         <span className="font-medium">{item.name}</span>
                                                         <span className="text-gray-500 text-xs ml-1">(x{item.quantity})</span>
                                                     </div>
                                                 ))}
-                                                <span className="text-xs text-gray-400">SKU: {order.items[0]?.sku}</span>
+                                                <span className="text-xs text-gray-400">SKU: {(order.items || [])[0]?.sku}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right text-sm">
                                             {Math.floor(order.estimatedTime / 60)}h {order.estimatedTime % 60}m
                                         </TableCell>
                                         <TableCell className="text-right font-medium">
-                                            ${order.serviceFee.toFixed(2)}
+                                            ${(order.serviceFee || 0).toFixed(2)}
                                         </TableCell>
                                         <TableCell className="text-sm text-gray-500 italic">
                                             {order.notes || "-"}
@@ -85,6 +96,11 @@ export default function OrdersPage() {
                         </Table>
                     </div>
                 </Card>
+
+                <CreateOrderModal
+                    isOpen={isCreateModalOpen}
+                    onClose={() => setIsCreateModalOpen(false)}
+                />
             </div>
         </DashboardLayout>
     );
