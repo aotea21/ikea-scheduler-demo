@@ -18,7 +18,10 @@ interface AppStore {
     resetDemo: () => void;
 }
 
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
+
+// Create a singleton client instance for the store
+const supabase = createClient();
 
 export const useStore = create<AppStore>((set, get) => ({
     assemblers: [],
