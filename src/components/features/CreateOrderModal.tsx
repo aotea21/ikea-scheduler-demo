@@ -4,11 +4,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { X, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface CreateOrderModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
+import * as React from 'react';
 
 interface OrderItem {
     name: string;
@@ -16,23 +12,65 @@ interface OrderItem {
     quantity: number;
 }
 
-export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
-    const [isLoading, setIsLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        customerName: '',
-        customerPhone: '',
-        email: '',
-        addressLine: '',
-        deliveryDate: '',
-        assemblyWindowStart: '09:00',
-        assemblyWindowEnd: '12:00',
-        serviceFee: '100',
-        notes: ''
-    });
+interface CreateOrderModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    order?: any; // Using any for now to avoid strict type checks against the store Order type if it differs slightly
+    onSuccess?: () => void;
+}
 
-    const [items, setItems] = useState<OrderItem[]>([
-        { name: '', sku: '', quantity: 1 }
-    ]);
+export function CreateOrderModal({ isOpen, onClose, order, onSuccess }: CreateOrderModalProps) {
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Initialize state properly based on order prop if present
+    const [formData, setFormData] = useState(() => ({
+        customerName: order?.customerName || '',
+        customerPhone: order?.customerPhone || '',
+        email: order?.email || '',
+        addressLine: order?.address.address || '',
+        deliveryDate: order?.deliveryDate || '',
+        assemblyWindowStart: order?.assemblyWindow ? order.assemblyWindow.split(' - ')[0] : '09:00',
+        assemblyWindowEnd: order?.assemblyWindow ? order.assemblyWindow.split(' - ')[1] : '12:00',
+        serviceFee: order?.serviceFee ? order.serviceFee.toString() : '100',
+        notes: order?.notes || ''
+    }));
+
+    const [items, setItems] = useState<OrderItem[]>(() =>
+        order?.items ? order.items.map((item: any) => ({
+            name: item.name,
+            sku: item.sku || '',
+            quantity: item.quantity
+        })) : [{ name: '', sku: '', quantity: 1 }]
+    );
+
+    // Effect to update state when order prop changes (e.g. when opening modal for different orders)
+    // We can't rely on this alone because isOpen toggles
+    // But since we mount/unmount or just show/hide, we should ensure data is fresh.
+    // simpler: pass a key to component in parent or use useEffect.
+    // Let's rely on the parent to unmount or reset, OR use useEffect here.
+    // Actually simpler: Parent controls mounting or we use useEffect
+
+    // Using useEffect to reset/set form data when modal opens/order changes
+    React.useEffect(() => {
+        if (isOpen) {
+            setFormData({
+                customerName: order?.customerName || '',
+                customerPhone: order?.customerPhone || '',
+                email: order?.email || '',
+                addressLine: order?.address?.address || order?.addressLine || '',
+                deliveryDate: order?.deliveryDate || '',
+                assemblyWindowStart: order?.assemblyWindow ? order.assemblyWindow.split(' - ')[0] : '09:00',
+                assemblyWindowEnd: order?.assemblyWindow ? order.assemblyWindow.split(' - ')[1] : '12:00',
+                serviceFee: order?.serviceFee ? order.serviceFee.toString() : '100',
+                notes: order?.notes || ''
+            });
+            setItems(order?.items ? order.items.map((item: any) => ({
+                name: item.name,
+                sku: item.sku || '',
+                quantity: item.quantity
+            })) : [{ name: '', sku: '', quantity: 1 }]);
+        }
+    }, [isOpen, order]);
 
     if (!isOpen) return null;
 
@@ -67,36 +105,44 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                 items
             };
 
-            const response = await fetch('/api/orders/create', {
-                method: 'POST',
+            const url = order ? `/api/orders/${order.id}` : '/api/orders/create';
+            const method = order ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to create order');
+                throw new Error(error.error || `Failed to ${order ? 'update' : 'create'} order`);
             }
 
             // Success
+            if (onSuccess) onSuccess();
             onClose();
-            // Reset form
-            setFormData({
-                customerName: '',
-                customerPhone: '',
-                email: '',
-                addressLine: '',
-                deliveryDate: '',
-                assemblyWindowStart: '09:00',
-                assemblyWindowEnd: '12:00',
-                serviceFee: '100',
-                notes: ''
-            });
-            setItems([{ name: '', sku: '', quantity: 1 }]);
+
+            // Only reset if creating
+            if (!order) {
+                setFormData({
+                    customerName: '',
+                    customerPhone: '',
+                    email: '',
+                    addressLine: '',
+                    deliveryDate: '',
+                    assemblyWindowStart: '09:00',
+                    assemblyWindowEnd: '12:00',
+                    serviceFee: '100',
+                    notes: ''
+                });
+                setItems([{ name: '', sku: '', quantity: 1 }]);
+            }
 
         } catch (error) {
-            console.error('Failed to create order:', error);
-            alert(error instanceof Error ? error.message : 'Failed to create order. Please try again.');
+            console.error(`Failed to ${order ? 'update' : 'create'} order:`, error);
+            alert(error instanceof Error ? error.message : `Failed to ${order ? 'update' : 'create'} order. Please try again.`);
+
         } finally {
             setIsLoading(false);
         }
@@ -108,7 +154,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b bg-gray-50">
-                    <h2 className="text-xl font-bold text-[#111111]">Create New Order</h2>
+                    <h2 className="text-xl font-bold text-[#111111]">{order ? 'Edit Order' : 'Create New Order'}</h2>
                     <Button variant="ghost" size="icon" onClick={onClose} type="button">
                         <X className="h-5 w-5" />
                     </Button>
@@ -290,7 +336,7 @@ export function CreateOrderModal({ isOpen, onClose }: CreateOrderModalProps) {
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isLoading} className="bg-[#0058a3] hover:bg-[#004f93]">
-                            {isLoading ? 'Creating...' : 'Create Order'}
+                            {isLoading ? (order ? 'Updating...' : 'Creating...') : (order ? 'Save Changes' : 'Create Order')}
                         </Button>
                     </div>
                 </form>

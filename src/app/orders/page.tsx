@@ -14,12 +14,54 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { CreateOrderModal } from "@/components/features/CreateOrderModal";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function OrdersPage() {
-    const { orders } = useStore();
+    const { orders, fetchOrders, isLoading } = useStore();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [editingOrder, setEditingOrder] = useState<any>(null); // Using any to avoid complex type mapping for now
+    const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = async (orderId: string) => {
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`/api/orders/${orderId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                let errorMessage = 'Failed to delete order';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                    // Ignore JSON parse error, use default message
+                }
+                throw new Error(errorMessage);
+            }
+
+            // Refresh orders list
+            await fetchOrders();
+            setDeletingOrderId(null);
+        } catch (error) {
+            console.error('Error deleting order:', error);
+            alert('Failed to delete order. Please try again.');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     return (
         <DashboardLayout>
@@ -52,6 +94,7 @@ export default function OrdersPage() {
                                     <TableHead className="text-right font-semibold">Est. Time</TableHead>
                                     <TableHead className="text-right font-semibold">Service Fee</TableHead>
                                     <TableHead className="min-w-[150px] font-semibold">Notes</TableHead>
+                                    <TableHead className="w-[120px] text-center font-semibold">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -90,17 +133,84 @@ export default function OrdersPage() {
                                         <TableCell className="text-sm text-gray-500 italic">
                                             {order.notes || "-"}
                                         </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-[#0058a3]"
+                                                    onClick={() => {
+                                                        setEditingOrder(order);
+                                                        setIsCreateModalOpen(true);
+                                                    }}
+                                                    title="Edit order"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                                                    onClick={() => setDeletingOrderId(order.id)}
+                                                    title="Delete order"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
+                        {isLoading ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
+                                <p className="text-lg font-medium">Loading orders...</p>
+                            </div>
+                        ) : orders.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
+                                <p className="text-lg font-medium">No orders found</p>
+                                <p className="text-sm">Click 'Create Order' to add a new order.</p>
+                            </div>
+                        ) : null}
                     </div>
                 </Card>
 
                 <CreateOrderModal
                     isOpen={isCreateModalOpen}
-                    onClose={() => setIsCreateModalOpen(false)}
+                    onClose={() => {
+                        setIsCreateModalOpen(false);
+                        setEditingOrder(null);
+                    }}
+                    order={editingOrder}
+                    onSuccess={() => {
+                        fetchOrders();
+                        setIsCreateModalOpen(false);
+                        setEditingOrder(null);
+                    }}
                 />
+
+                {/* Delete Confirmation Dialog */}
+                <AlertDialog open={deletingOrderId !== null} onOpenChange={(open: boolean) => !open && setDeletingOrderId(null)}>", "StartLine": 163
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to delete this order? This will also delete all associated tasks.
+                                This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={() => deletingOrderId && handleDelete(deletingOrderId)}
+                                disabled={isDeleting}
+                                className="bg-red-600 hover:bg-red-700"
+                            >
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </DashboardLayout>
     );

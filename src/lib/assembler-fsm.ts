@@ -19,7 +19,8 @@ import { AssemblerStatus } from './types';
  * Defines valid status transitions for each state
  */
 export const STATUS_TRANSITIONS: Record<AssemblerStatus, AssemblerStatus[]> = {
-    AVAILABLE: ['ASSIGNED'],
+    OFFLINE: ['AVAILABLE'],
+    AVAILABLE: ['OFFLINE', 'ASSIGNED'],
     ASSIGNED: ['EN_ROUTE', 'AVAILABLE'], // EN_ROUTE (normal flow) or AVAILABLE (cancel)
     EN_ROUTE: ['WORKING', 'AVAILABLE'],  // WORKING (arrive) or AVAILABLE (cancel)
     WORKING: ['AVAILABLE'],              // Only AVAILABLE (complete or abort)
@@ -83,7 +84,7 @@ export function canAssignTask(status: AssemblerStatus): boolean {
  * @returns true if status requires an active task
  */
 export function requiresActiveTask(status: AssemblerStatus): boolean {
-    return status !== 'AVAILABLE';
+    return !['AVAILABLE', 'OFFLINE'].includes(status);
 }
 
 /**
@@ -96,12 +97,12 @@ export function validateTaskAssignment(
     status: AssemblerStatus,
     activeTaskId: string | null
 ): void {
-    if (status === 'AVAILABLE' && activeTaskId !== null) {
+    if (['AVAILABLE', 'OFFLINE'].includes(status) && activeTaskId !== null) {
         throw new Error(
-            `Assembler with status AVAILABLE should not have an active task (found: ${activeTaskId})`
+            `Assembler with status ${status} should not have an active task (found: ${activeTaskId})`
         );
     }
-    if (status !== 'AVAILABLE' && activeTaskId === null) {
+    if (!['AVAILABLE', 'OFFLINE'].includes(status) && activeTaskId === null) {
         throw new Error(
             `Assembler with status ${status} must have an active task assigned`
         );

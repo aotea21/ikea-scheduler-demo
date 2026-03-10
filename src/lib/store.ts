@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Assembler, AssemblyTask, Order, TaskStatus } from './types';
+import { formatNZTime, formatNZDate, formatNZDateTime } from './utils';
 
 interface AppStore {
     assemblers: Assembler[];
@@ -11,6 +12,8 @@ interface AppStore {
 
     // Actions
     fetchData: () => Promise<void>;
+    fetchOrders: () => Promise<void>;
+    fetchTasks: () => Promise<void>;
     selectTask: (taskId: string | null) => void;
     assignAssembler: (taskId: string, assemblerIds: string[]) => void;
     updateTaskStatus: (taskId: string, status: string) => void;
@@ -41,8 +44,16 @@ export const useStore = create<AppStore>((set, get) => ({
                 fetch('/api/orders')
             ]);
 
+            if (!assemblersRes.ok) console.error('Assemblers API failed', await assemblersRes.text());
+            if (!tasksRes.ok) console.error('Tasks API failed', await tasksRes.text());
+            if (!ordersRes.ok) console.error('Orders API failed', await ordersRes.text());
+
             if (!assemblersRes.ok || !tasksRes.ok || !ordersRes.ok) {
-                throw new Error('Failed to fetch data');
+                const failed = [];
+                if (!assemblersRes.ok) failed.push('assemblers');
+                if (!tasksRes.ok) failed.push('tasks');
+                if (!ordersRes.ok) failed.push('orders');
+                throw new Error(`Failed to fetch data: ${failed.join(', ')} failed`);
             }
 
             const [assemblers, tasks, orders] = await Promise.all([
@@ -107,6 +118,28 @@ export const useStore = create<AppStore>((set, get) => ({
             console.error('Failed to persist assignment:', error);
             // Revert changes or show toast (for now just log)
             set({ error: 'Failed to save assignment to database' });
+        }
+    },
+
+    fetchOrders: async () => {
+        try {
+            const response = await fetch('/api/orders');
+            if (!response.ok) throw new Error('Failed to fetch orders');
+            const orders = await response.json();
+            set({ orders });
+        } catch (error) {
+            console.error('Failed to fetch orders:', error);
+        }
+    },
+
+    fetchTasks: async () => {
+        try {
+            const response = await fetch('/api/tasks');
+            if (!response.ok) throw new Error('Failed to fetch tasks');
+            const tasks = await response.json();
+            set({ tasks });
+        } catch (error) {
+            console.error('Failed to fetch tasks:', error);
         }
     },
 
@@ -222,7 +255,10 @@ function mapTask(data: any): AssemblyTask {
         requiredSkills: data.skill_required || 'EASY',
         estimatedDurationMinutes: 60, // Default if not in DB
         scheduledTime: data.scheduled_start ? new Date(data.scheduled_start) : null,
-        history: []
+        history: (data.history || []).map((h: any) => ({
+            ...h,
+            timestamp: formatNZDateTime(h.event_time)
+        }))
     };
 }
 
@@ -269,11 +305,13 @@ function mapOrder(data: any, existingOrder?: Order): Order {
         location: finalLocation,
         status: data.status,
         email: data.customer_email || '',
-        assemblyWindow: `${data.assembly_window_start || ''} - ${data.assembly_window_end || ''}`,
+        assemblyWindow: (data.assembly_window_start && data.assembly_window_end)
+            ? `${formatNZTime(data.assembly_window_start)} - ${formatNZTime(data.assembly_window_end)}`
+            : (data.assembly_window_start || data.assembly_window_end || ''),
         estimatedTime: 120, // Default
         serviceFee: data.service_fee || 0,
         notes: data.notes,
-        deliveryDate: data.delivery_date || ''
+        deliveryDate: formatNZDate(data.delivery_date) || data.delivery_date || ''
     };
 }
 

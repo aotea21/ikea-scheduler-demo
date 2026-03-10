@@ -83,7 +83,7 @@ export interface AssemblyTask {
   history: JobEvent[];
 }
 
-export type AssemblerStatus = 'AVAILABLE' | 'ASSIGNED' | 'EN_ROUTE' | 'WORKING';
+export type AssemblerStatus = 'OFFLINE' | 'AVAILABLE' | 'ASSIGNED' | 'EN_ROUTE' | 'WORKING';
 
 export interface Assembler {
   id: string; // UUID (user_id)

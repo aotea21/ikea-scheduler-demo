@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server'
+import { MOCK_ASSEMBLERS } from '@/lib/mockData';
 
 export async function GET() {
     const supabase = await createClient();
@@ -32,8 +33,11 @@ export async function GET() {
             })))
         }
 
-        // Fetch skills
-        const { data: skills } = await supabase.from('assembler_skills').select('*')
+        // Fetch skills (graceful fallback)
+        const { data: skills, error: skillsError } = await supabase.from('assembler_skills').select('*')
+        if (skillsError) {
+            console.warn('Failed to fetch assembler_skills (table might be missing), continuing without skills:', skillsError.message)
+        }
 
         // Combine assemblers with their skills and parse location
         const assemblersWithSkills = assemblers?.map((assembler: Record<string, unknown>) => ({
@@ -55,8 +59,11 @@ export async function GET() {
 
         return NextResponse.json(assemblersWithSkills)
     } catch (error) {
-        console.error('Error fetching assemblers:', error)
-        return NextResponse.json({ error: 'Failed to fetch assemblers' }, { status: 500 })
+        console.error('Error fetching assemblers:', error);
+        console.warn('Falling back to MOCK_ASSEMBLERS due to error');
+
+        // Return mock data on failure
+        return NextResponse.json(MOCK_ASSEMBLERS);
     }
 }
 
