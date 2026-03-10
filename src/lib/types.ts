@@ -51,11 +51,7 @@ export interface JobEvent {
   type: JobEventType; // Uppercase Enum
   eventTime: Date; // SQL column
   location?: Location;
-
   metadata?: Record<string, unknown>; // JSONB
-
-  // Legacy/UI
-  timestamp: Date; // Mapping eventTime to this for UI compatibility if needed, or update UI
   description?: string;
 }
 
@@ -73,13 +69,11 @@ export interface AssemblyTask {
   actualStart?: Date;
   actualEnd?: Date;
 
-  assignedAssemblerIds: string[]; // SQL column (was assemblerId, previously assignedAssemblerId)
+  assignedAssemblerIds: string[];
   createdAt: Date;
 
-  // Legacy/UI
-  requiredSkills: SkillLevel; // Mapping to skillRequired
+  // UI fields (no direct DB column yet)
   estimatedDurationMinutes: number;
-  scheduledTime: Date | null;
   history: JobEvent[];
 }
 

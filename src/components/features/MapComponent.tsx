@@ -52,14 +52,7 @@ export default function MapComponent() {
 
     useEffect(() => {
         setIsMounted(true);
-        console.log('MapComponent Mounted. Data state:', {
-            tasksCount: tasks.length,
-            assemblersCount: assemblers.length,
-            ordersCount: orders.length
-        });
-        if (tasks.length > 0) console.log('Sample Task:', tasks[0]);
-        if (assemblers.length > 0) console.log('Sample Assembler:', assemblers[0]);
-    }, [tasks, assemblers, orders]);
+    }, []);
 
     if (!isMounted) return <div className="h-full w-full bg-gray-100 flex items-center justify-center">Loading Map...</div>;
 
@@ -114,10 +107,7 @@ export default function MapComponent() {
                 {/* Render Tasks */}
                 {tasks.map(t => {
                     const order = orders.find(o => o.id === t.orderId);
-                    if (!order) {
-                        console.warn(`Map: Task ${t.id} has no matching order ${t.orderId}`);
-                        return null;
-                    }
+                    if (!order) return null;
 
                     const lat = order.address?.lat || 0;
                     const lng = order.address?.lng || 0;

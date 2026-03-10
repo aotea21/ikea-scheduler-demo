@@ -47,7 +47,7 @@ export default function StatusPage() {
                     {tasks.map(task => {
                         const order = orders.find(o => o.id === task.orderId);
                         // Sort history by timestamp descending (newest first)
-                        const history = [...(task.history || [])].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+                        const history = [...(task.history || [])].sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime());
                         const latestEvent = history[0];
 
                         return (
@@ -83,12 +83,12 @@ export default function StatusPage() {
                                                         <div className="flex justify-between items-center mb-1">
                                                             <h4 className="text-sm font-semibold text-gray-900">{getEventLabel(event.type)}</h4>
                                                             <span className="text-xs text-gray-400">
-                                                                {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                {new Date(event.eventTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                             </span>
                                                         </div>
                                                         <p className="text-xs text-gray-600">{event.description}</p>
                                                         <p className="text-[10px] text-gray-400 mt-1">
-                                                            {new Date(event.timestamp).toLocaleDateString()}
+                                                            {new Date(event.eventTime).toLocaleDateString()}
                                                         </p>
                                                     </div>
                                                 </div>

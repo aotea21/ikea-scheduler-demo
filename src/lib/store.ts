@@ -19,6 +19,7 @@ interface AppStore {
     updateTaskStatus: (taskId: string, status: string) => void;
     subscribeToChanges: () => () => void;
     resetDemo: () => void;
+    clearError: () => void;
 }
 
 import { createClient } from '@/lib/supabase/client';
@@ -80,6 +81,9 @@ export const useStore = create<AppStore>((set, get) => ({
     selectTask: (selectedTaskId) => set({ selectedTaskId }),
 
     assignAssembler: async (taskId, assemblerIds) => {
+        // Save snapshot for rollback
+        const snapshot = { tasks: get().tasks, assemblers: get().assemblers };
+
         // Optimistic Update
         set((state) => ({
             tasks: state.tasks.map((task) =>
@@ -88,7 +92,7 @@ export const useStore = create<AppStore>((set, get) => ({
                         ...task,
                         assignedAssemblerIds: assemblerIds,
                         status: 'ASSIGNED' as const,
-                        scheduledTime: new Date()
+                        scheduledStart: new Date()
                     }
                     : task
             ),
@@ -109,15 +113,16 @@ export const useStore = create<AppStore>((set, get) => ({
             });
 
             if (!response.ok) {
-                console.error(`Assignment API Error Status: ${response.status} ${response.statusText}`);
-                const errorData = await response.json();
-                console.error('Assignment API Error Body:', errorData);
+                const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || errorData.error || 'Failed to assign task');
             }
         } catch (error) {
-            console.error('Failed to persist assignment:', error);
-            // Revert changes or show toast (for now just log)
-            set({ error: 'Failed to save assignment to database' });
+            // Rollback optimistic update on failure
+            set({
+                tasks: snapshot.tasks,
+                assemblers: snapshot.assemblers,
+                error: error instanceof Error ? error.message : 'Failed to save assignment to database'
+            });
         }
     },
 
@@ -236,7 +241,9 @@ export const useStore = create<AppStore>((set, get) => ({
             selectedTaskId: null
         });
         get().fetchData();
-    }
+    },
+
+    clearError: () => set({ error: null }),
 }));
 
 // Helpers for Real-time Data Mapping
@@ -246,18 +253,20 @@ function mapTask(data: any): AssemblyTask {
         id: data.id,
         orderId: data.order_id,
         status: data.status,
-        skillRequired: data.skill_required, // Assuming basic mapping
+        skillRequired: data.skill_required || 'EASY',
         scheduledStart: data.scheduled_start ? new Date(data.scheduled_start) : undefined,
         scheduledEnd: data.scheduled_end ? new Date(data.scheduled_end) : undefined,
         assignedAssemblerIds: data.assigned_assembler_ids || [],
         createdAt: new Date(data.created_at),
-        // Legacy/UI fallbacks
-        requiredSkills: data.skill_required || 'EASY',
-        estimatedDurationMinutes: 60, // Default if not in DB
-        scheduledTime: data.scheduled_start ? new Date(data.scheduled_start) : null,
+        estimatedDurationMinutes: data.estimated_duration_minutes || 60,
         history: (data.history || []).map((h: any) => ({
-            ...h,
-            timestamp: formatNZDateTime(h.event_time)
+            id: h.id,
+            taskId: h.task_id || data.id,
+            type: h.type || h.event_type,
+            eventTime: new Date(h.event_time),
+            location: h.location,
+            metadata: h.metadata,
+            description: h.description,
         }))
     };
 }

@@ -43,6 +43,7 @@ function calculateSkillScore(assembler: Assembler, task: AssemblyTask): number {
 
 export function generateRecommendations(task: AssemblyTask, assemblers: Assembler[], taskLocation: { lat: number, lng: number }): AssignmentRecommendation[] {
     return assemblers
+        .filter(assembler => assembler.status !== 'OFFLINE')
         .map(assembler => {
             const distance = calculateDistance(
                 assembler.currentLocation.lat,
@@ -53,7 +54,7 @@ export function generateRecommendations(task: AssemblyTask, assemblers: Assemble
 
             // Scoring Heuristic - now includes all assemblers but penalizes unsuitable ones
             let skillScore = 0;
-            const hasSkill = hasRequiredSkill(assembler, task.requiredSkills);
+            const hasSkill = hasRequiredSkill(assembler, task.skillRequired);
             if (hasSkill) {
                 skillScore = 50; // Full skill points if qualified
             } else {
@@ -74,7 +75,7 @@ export function generateRecommendations(task: AssemblyTask, assemblers: Assemble
             const matchReasons = [];
             if (distance < 5) matchReasons.push('Nearby (<5km)');
             if (assembler.rating >= 4.8) matchReasons.push('Top Rated');
-            if (hasSkill && SKILL_VALUE[task.requiredSkills] === Math.max(...assembler.skills.map(s => SKILL_VALUE[s]))) {
+            if (hasSkill && SKILL_VALUE[task.skillRequired] === Math.max(...assembler.skills.map(s => SKILL_VALUE[s]))) {
                 matchReasons.push('Perfect Skill Match');
             }
             if (!assembler.activeTaskId) matchReasons.push('Available');

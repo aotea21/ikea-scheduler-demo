@@ -346,160 +346,140 @@ export const MOCK_TASKS: AssemblyTask[] = [
         orderId: 'o1',
         status: 'ASSIGNED',
         skillRequired: 'HARD',
-        requiredSkills: 'HARD',
-        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 2), // In 2 hours
+        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 2),
         scheduledEnd: new Date(Date.now() + 1000 * 60 * 60 * 4),
-        assignedAssemblerIds: ['a1'], // Array
+        assignedAssemblerIds: ['a1'],
         createdAt: new Date(),
         estimatedDurationMinutes: 120,
-        scheduledTime: new Date(Date.now() + 1000 * 60 * 60 * 2),
         history: [
-            { id: 'e1', taskId: 't1', type: 'ASSIGNED', eventTime: new Date(Date.now() - 3600000), timestamp: new Date(Date.now() - 3600000), location: { lat: -36.8485, lng: 174.7633, address: 'Previous Location' }, metadata: { assemblerId: 'a1' } }
+            { id: 'e1', taskId: 't1', type: 'ASSIGNED', eventTime: new Date(Date.now() - 3600000), location: { lat: -36.8485, lng: 174.7633, address: 'Previous Location' }, metadata: { assemblerId: 'a1' } }
         ]
     },
     {
         id: 't2',
-        orderId: 'o2', // Malm Bed
+        orderId: 'o2',
         skillRequired: 'MEDIUM',
-        requiredSkills: 'MEDIUM',
         status: 'IN_PROGRESS',
-        scheduledStart: new Date(Date.now() - 1000 * 60 * 60), // Started 1 hour ago
+        scheduledStart: new Date(Date.now() - 1000 * 60 * 60),
         scheduledEnd: new Date(Date.now() + 1000 * 60 * 60),
         actualStart: new Date(Date.now() - 1000 * 60 * 60),
-        assignedAssemblerIds: ['a2'], // Array
+        assignedAssemblerIds: ['a2'],
         createdAt: new Date(),
         estimatedDurationMinutes: 60,
-        scheduledTime: new Date(Date.now() - 1000 * 60 * 60),
         history: [
-            { id: 'e2', taskId: 't2', type: 'STARTED', eventTime: new Date(Date.now() - 3600000), timestamp: new Date(Date.now() - 3600000), location: { lat: -36.8600, lng: 174.7800, address: 'En Route Location' }, metadata: { assemblerId: 'a2' } }
+            { id: 'e2', taskId: 't2', type: 'STARTED', eventTime: new Date(Date.now() - 3600000), location: { lat: -36.8600, lng: 174.7800, address: 'En Route Location' }, metadata: { assemblerId: 'a2' } }
         ]
     },
     {
         id: 't3',
-        orderId: 'o3', // Billy Bookcase
+        orderId: 'o3',
         skillRequired: 'EASY',
-        requiredSkills: 'EASY',
         status: 'ISSUE',
-        scheduledStart: new Date(Date.now() - 1000 * 60 * 60 * 24), // Yesterday
+        scheduledStart: new Date(Date.now() - 1000 * 60 * 60 * 24),
         scheduledEnd: new Date(Date.now() - 1000 * 60 * 60 * 22),
         actualStart: new Date(Date.now() - 1000 * 60 * 60 * 24),
-        assignedAssemblerIds: ['a3'], // Array
+        assignedAssemblerIds: ['a3'],
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
         estimatedDurationMinutes: 45,
-        scheduledTime: null,
         history: [
-            { id: 'e3', taskId: 't3', type: 'ISSUE_REPORTED', eventTime: new Date(Date.now() - 1000 * 60 * 60 * 23), timestamp: new Date(Date.now() - 1000 * 60 * 60 * 23), location: { lat: -36.7800, lng: 174.7700, address: 'Issue Location' }, metadata: { reason: 'Missing parts' } }
+            { id: 'e3', taskId: 't3', type: 'ISSUE_REPORTED', eventTime: new Date(Date.now() - 1000 * 60 * 60 * 23), location: { lat: -36.7800, lng: 174.7700, address: 'Issue Location' }, metadata: { reason: 'Missing parts' } }
         ]
     },
     {
         id: 't4',
         orderId: 'o4',
         skillRequired: 'MEDIUM',
-        requiredSkills: 'MEDIUM',
         status: 'OPEN',
-        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 24), // Tomorrow
+        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 24),
         scheduledEnd: new Date(Date.now() + 1000 * 60 * 60 * 26),
-        assignedAssemblerIds: [], // Empty array for unassigned
+        assignedAssemblerIds: [],
         createdAt: new Date(),
         estimatedDurationMinutes: 150,
-        scheduledTime: null,
         history: []
     },
     {
         id: 't5',
         orderId: 'o5',
         skillRequired: 'MEDIUM',
-        requiredSkills: 'MEDIUM',
         status: 'ASSIGNED',
-        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 3), // In 3 hours
+        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 3),
         scheduledEnd: new Date(Date.now() + 1000 * 60 * 60 * 5.25),
         assignedAssemblerIds: ['a7', 'a8'],
         createdAt: new Date(),
         estimatedDurationMinutes: 135,
-        scheduledTime: new Date(Date.now() + 1000 * 60 * 60 * 3),
         history: [
-            { id: 'e5', taskId: 't5', type: 'ASSIGNED', eventTime: new Date(Date.now() - 1800000), timestamp: new Date(Date.now() - 1800000), location: { lat: -36.7650, lng: 174.7550, address: 'Takapuna' }, metadata: { assemblerId: 'a7,a8' } }
+            { id: 'e5', taskId: 't5', type: 'ASSIGNED', eventTime: new Date(Date.now() - 1800000), location: { lat: -36.7650, lng: 174.7550, address: 'Takapuna' }, metadata: { assemblerId: 'a7,a8' } }
         ]
     },
     {
         id: 't6',
         orderId: 'o6',
         skillRequired: 'MEDIUM',
-        requiredSkills: 'MEDIUM',
         status: 'EN_ROUTE',
-        scheduledStart: new Date(Date.now() + 1000 * 60 * 30), // In 30 mins
+        scheduledStart: new Date(Date.now() + 1000 * 60 * 30),
         scheduledEnd: new Date(Date.now() + 1000 * 60 * 120),
         assignedAssemblerIds: ['a10'],
         createdAt: new Date(),
         estimatedDurationMinutes: 90,
-        scheduledTime: new Date(Date.now() + 1000 * 60 * 30),
         history: [
-            { id: 'e6', taskId: 't6', type: 'ASSIGNED', eventTime: new Date(Date.now() - 3000000), timestamp: new Date(Date.now() - 3000000), location: { lat: -36.8100, lng: 174.7400, address: 'Herne Bay' }, metadata: { assemblerId: 'a10' } },
-            { id: 'e7', taskId: 't6', type: 'EN_ROUTE', eventTime: new Date(Date.now() - 900000), timestamp: new Date(Date.now() - 900000), location: { lat: -36.8200, lng: 174.7450, address: 'En route' }, metadata: {} }
+            { id: 'e6', taskId: 't6', type: 'ASSIGNED', eventTime: new Date(Date.now() - 3000000), location: { lat: -36.8100, lng: 174.7400, address: 'Herne Bay' }, metadata: { assemblerId: 'a10' } },
+            { id: 'e7', taskId: 't6', type: 'EN_ROUTE', eventTime: new Date(Date.now() - 900000), location: { lat: -36.8200, lng: 174.7450, address: 'En route' }, metadata: {} }
         ]
     },
     {
         id: 't7',
         orderId: 'o7',
         skillRequired: 'EASY',
-        requiredSkills: 'EASY',
         status: 'COMPLETED',
-        scheduledStart: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
+        scheduledStart: new Date(Date.now() - 1000 * 60 * 60 * 5),
         scheduledEnd: new Date(Date.now() - 1000 * 60 * 60 * 3.75),
         actualStart: new Date(Date.now() - 1000 * 60 * 60 * 5),
         actualEnd: new Date(Date.now() - 1000 * 60 * 60 * 3.5),
         assignedAssemblerIds: ['a5'],
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 10),
         estimatedDurationMinutes: 75,
-        scheduledTime: new Date(Date.now() - 1000 * 60 * 60 * 5),
         history: [
-            { id: 'e8', taskId: 't7', type: 'ASSIGNED', eventTime: new Date(Date.now() - 1000 * 60 * 60 * 6), timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6), location: { lat: -36.9000, lng: 174.8000, address: 'Ellerslie' }, metadata: { assemblerId: 'a5' } },
-            { id: 'e9', taskId: 't7', type: 'STARTED', eventTime: new Date(Date.now() - 1000 * 60 * 60 * 5), timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), location: { lat: -36.8700, lng: 174.7780, address: 'Newmarket' }, metadata: {} },
-            { id: 'e10', taskId: 't7', type: 'COMPLETED', eventTime: new Date(Date.now() - 1000 * 60 * 60 * 3.5), timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3.5), location: { lat: -36.8700, lng: 174.7780, address: 'Newmarket' }, metadata: {} }
+            { id: 'e8', taskId: 't7', type: 'ASSIGNED', eventTime: new Date(Date.now() - 1000 * 60 * 60 * 6), location: { lat: -36.9000, lng: 174.8000, address: 'Ellerslie' }, metadata: { assemblerId: 'a5' } },
+            { id: 'e9', taskId: 't7', type: 'STARTED', eventTime: new Date(Date.now() - 1000 * 60 * 60 * 5), location: { lat: -36.8700, lng: 174.7780, address: 'Newmarket' }, metadata: {} },
+            { id: 'e10', taskId: 't7', type: 'COMPLETED', eventTime: new Date(Date.now() - 1000 * 60 * 60 * 3.5), location: { lat: -36.8700, lng: 174.7780, address: 'Newmarket' }, metadata: {} }
         ]
     },
     {
         id: 't8',
         orderId: 'o8',
         skillRequired: 'MEDIUM',
-        requiredSkills: 'MEDIUM',
         status: 'OPEN',
-        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 48), // In 2 days
+        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 48),
         scheduledEnd: new Date(Date.now() + 1000 * 60 * 60 * 49.83),
         assignedAssemblerIds: [],
         createdAt: new Date(),
         estimatedDurationMinutes: 110,
-        scheduledTime: null,
         history: []
     },
     {
         id: 't9',
         orderId: 'o9',
         skillRequired: 'EASY',
-        requiredSkills: 'EASY',
         status: 'ASSIGNED',
-        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 6), // In 6 hours
+        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 6),
         scheduledEnd: new Date(Date.now() + 1000 * 60 * 60 * 7),
         assignedAssemblerIds: ['a4'],
         createdAt: new Date(),
         estimatedDurationMinutes: 60,
-        scheduledTime: new Date(Date.now() + 1000 * 60 * 60 * 6),
         history: [
-            { id: 'e11', taskId: 't9', type: 'ASSIGNED', eventTime: new Date(Date.now() - 1200000), timestamp: new Date(Date.now() - 1200000), location: { lat: -36.8600, lng: 174.7800, address: 'Remuera' }, metadata: { assemblerId: 'a4' } }
+            { id: 'e11', taskId: 't9', type: 'ASSIGNED', eventTime: new Date(Date.now() - 1200000), location: { lat: -36.8600, lng: 174.7800, address: 'Remuera' }, metadata: { assemblerId: 'a4' } }
         ]
     },
     {
         id: 't10',
         orderId: 'o10',
         skillRequired: 'HARD',
-        requiredSkills: 'HARD',
         status: 'OPEN',
-        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 72), // In 3 days
+        scheduledStart: new Date(Date.now() + 1000 * 60 * 60 * 72),
         scheduledEnd: new Date(Date.now() + 1000 * 60 * 60 * 74),
         assignedAssemblerIds: [],
         createdAt: new Date(),
         estimatedDurationMinutes: 120,
-        scheduledTime: null,
         history: []
     }
 ];

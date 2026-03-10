@@ -37,7 +37,6 @@ export async function GET() {
             orderId: task.order_id,
             status: task.status,
             skillRequired: task.skill_required,
-            requiredSkills: task.skill_required, // Add this for UI/Scheduler compatibility
             scheduledStart: task.scheduled_start,
             scheduledEnd: task.scheduled_end,
             estimatedDurationMinutes: task.estimated_duration_minutes,

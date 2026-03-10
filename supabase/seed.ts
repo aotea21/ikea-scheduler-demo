@@ -158,7 +158,7 @@ async function seed() {
                 id: mockIdToUuid(e.id),
                 task_id: t.id,
                 event_type: e.type,
-                event_time: e.eventTime || e.timestamp,
+                event_time: e.eventTime,
                 location: e.location ? `POINT(${e.location.lng} ${e.location.lat})` : null,
                 metadata: JSON.stringify(e.metadata || {})
             }))

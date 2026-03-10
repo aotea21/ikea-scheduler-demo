@@ -48,7 +48,7 @@ export function TaskList() {
                                         <h4 className="font-medium text-base">{order.items[0].name}</h4>
                                     </div>
                                     <Badge variant="outline" className="text-[10px] uppercase">
-                                        {task.requiredSkills}
+                                        {task.skillRequired}
                                     </Badge>
                                 </div>
 

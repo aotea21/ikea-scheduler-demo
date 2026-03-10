@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { AssemblerStatus } from '@/lib/types';
 import { validateTransition, getValidNextStatuses } from '@/lib/assembler-fsm';
 import { FSM_CONFIG, FSMTransitionConfig } from '@/lib/fsm-config';
@@ -27,12 +27,22 @@ export function useAssemblerFSM(
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Sync external status changes (e.g. dispatcher assigns a task server-side)
+    // Only update when not mid-transition to avoid UI flicker
+    useEffect(() => {
+        if (!pendingTransition && !isTransitioning) {
+            setStatus(initialStatus);
+        }
+    }, [initialStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Get valid next statuses based on FSM rules
-    // We map them to our configuration to get the UI details
-    const validContexts = getValidNextStatuses(status);
-    const validTransitions = (FSM_CONFIG[status] || []).filter(config =>
-        validContexts.includes(config.targetStatus)
-    );
+    // Map them to UI config, memoized to avoid unnecessary recalculation
+    const validTransitions = useMemo(() => {
+        const validContexts = getValidNextStatuses(status);
+        return (FSM_CONFIG[status] || []).filter(config =>
+            validContexts.includes(config.targetStatus)
+        );
+    }, [status]);
 
     const initiateTransition = useCallback((targetStatus: AssemblerStatus) => {
         setError(null);

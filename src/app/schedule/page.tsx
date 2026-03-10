@@ -102,7 +102,7 @@ export default function SchedulePage() {
                                             <span>{task.estimatedDurationMinutes} mins est.</span>
                                         </div>
                                         <div className="text-xs text-orange-600 font-medium">
-                                            Requires {task.requiredSkills} skill level
+                                            Requires {task.skillRequired} skill level
                                         </div>
                                     </CardContent>
                                 </Card>

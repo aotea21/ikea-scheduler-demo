@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { useStore } from "@/lib/store";
 import { generateRecommendations } from "@/lib/scheduler";
@@ -41,14 +41,10 @@ export function AssignmentModal() {
 
     const isReassignment = task.status === 'ASSIGNED';
 
-    // Debug Logging
-    console.log('--- AssignmentModal Debug ---');
-    console.log('Task:', task);
-    console.log('Assemblers (Total):', assemblers.length);
-    console.log('Assembler[0] Sample:', assemblers[0]);
-
-    const recommendations = generateRecommendations(task, assemblers, order.address);
-    console.log('Recommendations:', recommendations);
+    const recommendations = useMemo(
+        () => generateRecommendations(task, assemblers, order.address),
+        [task, assemblers, order.address]
+    );
 
     // Get currently assigned assemblers (for update mode)
     const currentlyAssignedAssemblers = isReassignment
