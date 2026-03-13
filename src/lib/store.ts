@@ -193,16 +193,35 @@ export const useStore = create<AppStore>((set, get) => ({
 
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}));
+
+                // 404 = task not in DB (likely mock/demo data) → keep optimistic update, no rollback
+                if (response.status === 404) {
+                    console.info(`Task ${taskId} not found in DB (mock data) — status changed locally only`);
+                    return;
+                }
+
+                // 422 = FSM validation error → rollback, show error
+                if (response.status === 422) {
+                    set({
+                        tasks: snapshot.tasks,
+                        assemblers: snapshot.assemblers,
+                        error: errData.message || 'Invalid status transition',
+                    });
+                    return;
+                }
+
+                // Other errors → rollback
                 throw new Error(errData.message || errData.error || 'Failed to change task status');
             }
         } catch (error) {
-            // Rollback on failure
+            // Rollback on unexpected failure
             set({
                 tasks: snapshot.tasks,
                 assemblers: snapshot.assemblers,
                 error: error instanceof Error ? error.message : 'Failed to change task status',
             });
         }
+
     },
 
     subscribeToChanges: () => {

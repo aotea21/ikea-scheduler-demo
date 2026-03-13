@@ -32,7 +32,7 @@ export async function POST(
         // 1. Fetch current task status from DB
         const { data: task, error: fetchError } = await supabase
             .from('tasks')
-            .select('id, status, assigned_assembler_ids')
+            .select('id, status')
             .eq('id', taskId)
             .single();
 
@@ -42,6 +42,19 @@ export async function POST(
                 { status: 404 }
             );
         }
+
+        // Fetch assembler IDs from task_assignments (graceful fallback)
+        let assemblerIds: string[] = [];
+        try {
+            const { data: assignments } = await supabase
+                .from('task_assignments')
+                .select('assembler_id')
+                .eq('task_uuid', taskId);
+            assemblerIds = assignments?.map((a: { assembler_id: string }) => a.assembler_id) ?? [];
+        } catch {
+            // task_assignments might not exist or use different column names
+        }
+
 
         const oldStatus = normalizeTaskStatus(task.status) as TaskStatus;
 
@@ -92,7 +105,7 @@ export async function POST(
         }
 
         // 5. Sync assembler status based on task transition
-        await syncAssemblerStatus(supabase, task, oldStatus, newStatus, now);
+        await syncAssemblerStatus(supabase, assemblerIds, newStatus, now);
 
         return NextResponse.json({
             success: true,
@@ -118,12 +131,10 @@ export async function POST(
 async function syncAssemblerStatus(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supabase: any,
-    task: { id: string; assigned_assembler_ids?: string[] },
-    oldStatus: TaskStatus,
+    assemblerIds: string[],
     newStatus: TaskStatus,
     now: string
 ) {
-    const assemblerIds: string[] = task.assigned_assembler_ids ?? [];
     if (assemblerIds.length === 0) return;
 
     let assemblerStatus: string | null = null;
