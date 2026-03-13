@@ -41,17 +41,49 @@ export interface Order {
   deliveryDate: string; // Keeping for UI display convenience
 }
 
-export type TaskStatus = 'OPEN' | 'ASSIGNED' | 'EN_ROUTE' | 'IN_PROGRESS' | 'COMPLETED' | 'ISSUE';
+export type TaskStatus =
+  | 'CREATED'       // 주문 접수, 배정 전
+  | 'SCHEDULING'    // 시스템이 배정 중
+  | 'ASSIGNED'      // Assembler에게 배정됨
+  | 'CONFIRMED'     // Assembler가 수락함
+  | 'EN_ROUTE'      // Assembler 이동 중
+  | 'ARRIVED'       // 현장 도착
+  | 'IN_PROGRESS'   // 조립 작업 중
+  | 'COMPLETED'     // 작업 완료
+  | 'VERIFIED'      // Admin 검수 완료
+  | 'ISSUE'         // 문제 발생
+  | 'CANCELLED';    // 취소됨
 
-export type JobEventType = 'ASSIGNED' | 'EN_ROUTE' | 'STARTED' | 'PAUSED' | 'RESUMED' | 'COMPLETED' | 'ISSUE_REPORTED';
+export type TaskActorType = 'assembler' | 'admin' | 'system';
+
+export interface TaskEventActor {
+  type: TaskActorType;
+  id: string;
+}
+
+export type JobEventType =
+  | 'STATUS_CHANGED'
+  | 'ASSIGNED'
+  | 'CONFIRMED'
+  | 'EN_ROUTE'
+  | 'ARRIVED'
+  | 'STARTED'
+  | 'COMPLETED'
+  | 'VERIFIED'
+  | 'ISSUE_REPORTED'
+  | 'CANCELLED'
+  | 'REASSIGNED';
 
 export interface JobEvent {
   id: string; // UUID
   taskId: string;
-  type: JobEventType; // Uppercase Enum
-  eventTime: Date; // SQL column
+  type: JobEventType;
+  eventTime: Date;
+  actor?: TaskEventActor;   // 누가 변경했는지
+  oldStatus?: TaskStatus;   // 이전 상태
+  newStatus?: TaskStatus;   // 새 상태
   location?: Location;
-  metadata?: Record<string, unknown>; // JSONB
+  metadata?: Record<string, unknown>;
   description?: string;
 }
 

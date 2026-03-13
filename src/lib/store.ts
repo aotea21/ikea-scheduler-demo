@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { Assembler, AssemblyTask, Order, TaskStatus } from './types';
-import { formatNZTime, formatNZDate, formatNZDateTime } from './utils';
+import { Assembler, AssemblyTask, Order, TaskStatus, TaskActorType } from './types';
+import { normalizeTaskStatus } from './task-fsm';
+import { formatNZTime, formatNZDate } from './utils';
 
 interface AppStore {
     assemblers: Assembler[];
@@ -17,6 +18,13 @@ interface AppStore {
     selectTask: (taskId: string | null) => void;
     assignAssembler: (taskId: string, assemblerIds: string[]) => void;
     updateTaskStatus: (taskId: string, status: string) => void;
+    transitionTaskStatus: (
+        taskId: string,
+        newStatus: TaskStatus,
+        actorType: TaskActorType,
+        actorId: string,
+        notes?: string
+    ) => Promise<void>;
     subscribeToChanges: () => () => void;
     resetDemo: () => void;
     clearError: () => void;
@@ -148,11 +156,54 @@ export const useStore = create<AppStore>((set, get) => ({
         }
     },
 
+    // Local-only optimistic update (kept for non-critical UI use)
     updateTaskStatus: (taskId, status) => set((state) => ({
         tasks: state.tasks.map((task) =>
             task.id === taskId ? { ...task, status: status as TaskStatus } : task
         )
     })),
+
+    // FSM-validated, DB-persisted status transition
+    transitionTaskStatus: async (taskId, newStatus, actorType, actorId, notes) => {
+        const snapshot = { tasks: get().tasks, assemblers: get().assemblers };
+
+        // Optimistic UI update
+        set((state) => ({
+            tasks: state.tasks.map((task) =>
+                task.id === taskId ? { ...task, status: newStatus } : task
+            ),
+            // Sync assembler status locally
+            assemblers: state.assemblers.map((assembler) => {
+                const task = state.tasks.find(t => t.id === taskId);
+                if (!task?.assignedAssemblerIds.includes(assembler.id)) return assembler;
+                let assemblerStatus = assembler.status;
+                if (newStatus === 'EN_ROUTE') assemblerStatus = 'EN_ROUTE';
+                else if (newStatus === 'ARRIVED' || newStatus === 'IN_PROGRESS') assemblerStatus = 'WORKING';
+                else if (['COMPLETED', 'VERIFIED', 'CANCELLED'].includes(newStatus)) assemblerStatus = 'AVAILABLE';
+                return { ...assembler, status: assemblerStatus };
+            }),
+        }));
+
+        try {
+            const response = await fetch(`/api/tasks/${taskId}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newStatus, actorType, actorId, notes }),
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.message || errData.error || 'Failed to change task status');
+            }
+        } catch (error) {
+            // Rollback on failure
+            set({
+                tasks: snapshot.tasks,
+                assemblers: snapshot.assemblers,
+                error: error instanceof Error ? error.message : 'Failed to change task status',
+            });
+        }
+    },
 
     subscribeToChanges: () => {
         const channel = supabase
@@ -252,7 +303,7 @@ function mapTask(data: any): AssemblyTask {
     return {
         id: data.id,
         orderId: data.order_id,
-        status: data.status,
+        status: normalizeTaskStatus(data.status ?? 'CREATED'),
         skillRequired: data.skill_required || 'EASY',
         scheduledStart: data.scheduled_start ? new Date(data.scheduled_start) : undefined,
         scheduledEnd: data.scheduled_end ? new Date(data.scheduled_end) : undefined,

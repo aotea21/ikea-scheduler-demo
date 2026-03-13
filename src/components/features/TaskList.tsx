@@ -41,7 +41,7 @@ export function TaskList() {
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
                                             <span className="font-semibold text-sm">#{order.id.toUpperCase()}</span>
-                                            <Badge variant={task.status === 'OPEN' ? 'ikea' : 'outline'}>
+                                            <Badge variant={task.status === 'CREATED' ? 'ikea' : 'outline'}>
                                                 {task.status}
                                             </Badge>
                                         </div>
@@ -67,7 +67,7 @@ export function TaskList() {
                                     </div>
                                 </div>
 
-                                {task.status === 'OPEN' && (
+                                {task.status === 'CREATED' && (
                                     <Button
                                         size="sm"
                                         className="w-full mt-2 bg-[#0058a3] hover:bg-[#004f93]"

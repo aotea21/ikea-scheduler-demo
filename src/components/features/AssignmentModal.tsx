@@ -31,20 +31,22 @@ export function AssignmentModal() {
         }
     }, [selectedTaskId, tasks]);
 
+    // Derive task and order — may be null, handled by early return below
+    const task = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) : undefined;
+    const order = task ? orders.find(o => o.id === task.orderId) : undefined;
+
+    // useMemo must be called unconditionally (Rules of Hooks) — returns [] when not ready
+    const recommendations = useMemo(() => {
+        if (!task || !order) return [];
+        return generateRecommendations(task, assemblers, order.address);
+    }, [task, order, assemblers]);
+
+    // Early returns AFTER all hooks
     if (!selectedTaskId) return null;
-
-    const task = tasks.find(t => t.id === selectedTaskId);
-    if (!task || (task.status !== 'OPEN' && task.status !== 'ASSIGNED')) return null;
-
-    const order = orders.find(o => o.id === task.orderId);
+    if (!task || (task.status !== 'CREATED' && task.status !== 'ASSIGNED')) return null;
     if (!order) return null;
 
     const isReassignment = task.status === 'ASSIGNED';
-
-    const recommendations = useMemo(
-        () => generateRecommendations(task, assemblers, order.address),
-        [task, assemblers, order.address]
-    );
 
     // Get currently assigned assemblers (for update mode)
     const currentlyAssignedAssemblers = isReassignment
