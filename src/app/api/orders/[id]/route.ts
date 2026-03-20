@@ -137,7 +137,7 @@ export async function PUT(
         console.log('Updating order:', id, updates);
 
         // Prepare order updates
-        const orderUpdates: Record<string, any> = {};
+        const orderUpdates: Record<string, string | number | unknown> = {};
 
         if (updates.customerName !== undefined) orderUpdates.customer_name = updates.customerName;
         if (updates.customerPhone !== undefined) orderUpdates.customer_phone = updates.customerPhone;
@@ -177,7 +177,7 @@ export async function PUT(
 
         // Update associated task if delivery time changes
         if (orderUpdates.assembly_window_start || orderUpdates.assembly_window_end) {
-            const taskUpdates: Record<string, any> = {};
+            const taskUpdates: Record<string, string | unknown> = {};
 
             if (orderUpdates.assembly_window_start) {
                 taskUpdates.scheduled_start = orderUpdates.assembly_window_start;

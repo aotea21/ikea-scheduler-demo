@@ -30,7 +30,7 @@ import {
 export default function OrdersPage() {
     const { orders, fetchOrders, isLoading } = useStore();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [editingOrder, setEditingOrder] = useState<any>(null); // Using any to avoid complex type mapping for now
+    const [editingOrder, setEditingOrder] = useState<import('@/lib/types').Order | null>(null);
     const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -46,7 +46,8 @@ export default function OrdersPage() {
                 try {
                     const errorData = await response.json();
                     errorMessage = errorData.error || errorMessage;
-                } catch (e) {
+                } catch (e: unknown) {
+                    console.error('Failed to parse error:', e);
                     // Ignore JSON parse error, use default message
                 }
                 throw new Error(errorMessage);
@@ -169,7 +170,7 @@ export default function OrdersPage() {
                         ) : orders.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
                                 <p className="text-lg font-medium">No orders found</p>
-                                <p className="text-sm">Click 'Create Order' to add a new order.</p>
+                                <p className="text-sm">Click &apos;Create Order&apos; to add a new order.</p>
                             </div>
                         ) : null}
                     </div>
@@ -190,7 +191,7 @@ export default function OrdersPage() {
                 />
 
                 {/* Delete Confirmation Dialog */}
-                <AlertDialog open={deletingOrderId !== null} onOpenChange={(open: boolean) => !open && setDeletingOrderId(null)}>", "StartLine": 163
+                <AlertDialog open={deletingOrderId !== null} onOpenChange={(open: boolean) => !open && setDeletingOrderId(null)}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete Order</AlertDialogTitle>

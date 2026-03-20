@@ -34,6 +34,7 @@ export async function GET() {
         // Combine tasks with assignments and history
         const tasksWithDetails = tasks?.map(task => ({
             id: task.id,
+            uuid: task.uuid,                 // expose real UUID for debugging
             orderId: task.order_id,
             status: task.status,
             skillRequired: task.skill_required,
@@ -42,18 +43,24 @@ export async function GET() {
             estimatedDurationMinutes: task.estimated_duration_minutes,
             actualStart: task.actual_start,
             actualEnd: task.actual_end,
-            assignedAssemblerIds: assignments?.filter(a => a.task_uuid === task.uuid).map(a => a.assembler_id) || [],
-            history: events?.filter(e => e.task_id === task.id).map(e => ({
+            // Join by task_uuid (UUID column) OR task_id (legacy short ID column)
+            assignedAssemblerIds: assignments?.filter(a =>
+                (task.uuid && a.task_uuid === task.uuid) ||
+                (a.task_id === task.id)
+            ).map(a => a.assembler_id) || [],
+            history: events?.filter(e => e.task_id === task.id || (task.uuid && e.task_uuid === task.uuid)).map(e => ({
                 id: e.id,
                 type: e.event_type,
                 timestamp: e.event_time,
                 eventTime: e.event_time,
+                description: e.description ?? e.notes,
                 location: e.location ? parsePoint(e.location) : null,
                 metadata: e.metadata
             })) || []
         }))
 
         return NextResponse.json(tasksWithDetails)
+
     } catch (error) {
         console.error('Error fetching tasks:', error);
         console.warn('Falling back to MOCK_TASKS due to error');
@@ -64,6 +71,7 @@ export async function GET() {
 }
 
 // Helper to parse PostGIS POINT format
-function parsePoint(pointStr: string): { lat: number; lng: number; address: string } {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function parsePoint(_pointStr: string): { lat: number; lng: number; address: string } {
     return { lat: 0, lng: 0, address: 'Unknown' }
 }

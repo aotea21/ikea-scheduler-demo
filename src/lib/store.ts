@@ -16,6 +16,12 @@ interface AppStore {
     fetchOrders: () => Promise<void>;
     fetchTasks: () => Promise<void>;
     selectTask: (taskId: string | null) => void;
+    
+    // Assembler CRUD
+    addAssembler: (data: Partial<Assembler>) => Promise<boolean>;
+    updateAssembler: (id: string, data: Partial<Assembler>) => Promise<boolean>;
+    deleteAssembler: (id: string) => Promise<boolean>;
+
     assignAssembler: (taskId: string, assemblerIds: string[]) => void;
     updateTaskStatus: (taskId: string, status: string) => void;
     transitionTaskStatus: (
@@ -87,6 +93,62 @@ export const useStore = create<AppStore>((set, get) => ({
     },
 
     selectTask: (selectedTaskId) => set({ selectedTaskId }),
+
+    addAssembler: async (data) => {
+        try {
+            const res = await fetch('/api/assemblers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to add assembler');
+            }
+            // Fetch fresh data to ensure connections (profiles) are synced
+            await get().fetchData();
+            return true;
+        } catch (error: unknown) {
+            set({ error: (error as Error).message });
+            return false;
+        }
+    },
+
+    updateAssembler: async (id, data) => {
+        try {
+            const res = await fetch(`/api/assemblers/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to update assembler');
+            }
+            await get().fetchData();
+            return true;
+        } catch (error: unknown) {
+            set({ error: (error as Error).message });
+            return false;
+        }
+    },
+
+    deleteAssembler: async (id) => {
+        try {
+            const res = await fetch(`/api/assemblers/${id}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to deactivate assembler');
+            }
+            await get().fetchData();
+            return true;
+        } catch (error: unknown) {
+            set({ error: (error as Error).message });
+            return false;
+        }
+    },
 
     assignAssembler: async (taskId, assemblerIds) => {
         // Save snapshot for rollback
@@ -235,7 +297,6 @@ export const useStore = create<AppStore>((set, get) => ({
                         const newTask = mapTask(payload.new);
                         set((state) => ({ tasks: [...state.tasks, newTask] }));
                     } else if (payload.eventType === 'UPDATE') {
-                        const existingTask = get().tasks.find(t => t.id === payload.new.id);
                         const updatedTask = mapTask(payload.new);
                         set((state) => ({
                             tasks: state.tasks.map((t) =>
@@ -329,11 +390,11 @@ function mapTask(data: any): AssemblyTask {
         assignedAssemblerIds: data.assigned_assembler_ids || [],
         createdAt: new Date(data.created_at),
         estimatedDurationMinutes: data.estimated_duration_minutes || 60,
-        history: (data.history || []).map((h: any) => ({
+        history: (data.history || []).map((h: Record<string, unknown>) => ({
             id: h.id,
             taskId: h.task_id || data.id,
             type: h.type || h.event_type,
-            eventTime: new Date(h.event_time),
+            eventTime: new Date(h.event_time as string | number | Date),
             location: h.location,
             metadata: h.metadata,
             description: h.description,

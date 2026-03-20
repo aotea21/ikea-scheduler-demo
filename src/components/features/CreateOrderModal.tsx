@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { X, Plus, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, Trash2, X } from "lucide-react";
 import * as React from 'react';
 
 interface OrderItem {
@@ -15,7 +14,7 @@ interface OrderItem {
 interface CreateOrderModalProps {
     isOpen: boolean;
     onClose: () => void;
-    order?: any; // Using any for now to avoid strict type checks against the store Order type if it differs slightly
+    order?: import('@/lib/types').Order | null;
     onSuccess?: () => void;
 }
 
@@ -36,7 +35,7 @@ export function CreateOrderModal({ isOpen, onClose, order, onSuccess }: CreateOr
     }));
 
     const [items, setItems] = useState<OrderItem[]>(() =>
-        order?.items ? order.items.map((item: any) => ({
+        order?.items ? order.items.map((item: { name: string; sku?: string; quantity: number }) => ({
             name: item.name,
             sku: item.sku || '',
             quantity: item.quantity
@@ -57,14 +56,14 @@ export function CreateOrderModal({ isOpen, onClose, order, onSuccess }: CreateOr
                 customerName: order?.customerName || '',
                 customerPhone: order?.customerPhone || '',
                 email: order?.email || '',
-                addressLine: order?.address?.address || order?.addressLine || '',
+                addressLine: order?.address?.address || (order as unknown as { addressLine?: string })?.addressLine || '',
                 deliveryDate: order?.deliveryDate || '',
                 assemblyWindowStart: order?.assemblyWindow ? order.assemblyWindow.split(' - ')[0] : '09:00',
                 assemblyWindowEnd: order?.assemblyWindow ? order.assemblyWindow.split(' - ')[1] : '12:00',
                 serviceFee: order?.serviceFee ? order.serviceFee.toString() : '100',
                 notes: order?.notes || ''
             });
-            setItems(order?.items ? order.items.map((item: any) => ({
+            setItems(order?.items ? order.items.map((item: { name: string; sku?: string; quantity: number }) => ({
                 name: item.name,
                 sku: item.sku || '',
                 quantity: item.quantity

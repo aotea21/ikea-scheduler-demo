@@ -127,7 +127,6 @@ export async function POST(
 /**
  * Sync assembler.status when a task changes state
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function syncAssemblerStatus(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supabase: any,

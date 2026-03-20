@@ -32,7 +32,7 @@ export async function POST(request: Request) {
             errorMessage = error.message;
         } else if (typeof error === 'object' && error !== null) {
             // Handle Supabase error object or other objects
-            errorMessage = (error as any).message || 'Unknown error occurred';
+            errorMessage = (error as Error).message || 'Unknown error occurred';
             errorDetails = error;
         } else if (typeof error === 'string') {
             errorMessage = error;

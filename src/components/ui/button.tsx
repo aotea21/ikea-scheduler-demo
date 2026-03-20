@@ -43,7 +43,7 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
+    ({ className, variant = "default", size = "default", ...props }, ref) => {
         // We ignore asChild for now as we don't have Slot available easily without install
         return (
             <button

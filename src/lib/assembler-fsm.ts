@@ -21,9 +21,11 @@ import { AssemblerStatus } from './types';
 export const STATUS_TRANSITIONS: Record<AssemblerStatus, AssemblerStatus[]> = {
     OFFLINE: ['AVAILABLE'],
     AVAILABLE: ['OFFLINE', 'ASSIGNED'],
-    ASSIGNED: ['EN_ROUTE', 'AVAILABLE'], // EN_ROUTE (normal flow) or AVAILABLE (cancel)
-    EN_ROUTE: ['WORKING', 'AVAILABLE'],  // WORKING (arrive) or AVAILABLE (cancel)
-    WORKING: ['AVAILABLE'],              // Only AVAILABLE (complete or abort)
+    ASSIGNED: ['EN_ROUTE', 'AVAILABLE'],
+    EN_ROUTE: ['WORKING', 'AVAILABLE'],
+    WORKING: ['AVAILABLE'],
+    BUSY: ['AVAILABLE'],   // legacy DB status → treat same as WORKING
+    INACTIVE: [],
 };
 
 /**

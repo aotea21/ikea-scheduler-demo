@@ -77,5 +77,16 @@ export const FSM_CONFIG: Record<AssemblerStatus, FSMTransitionConfig[]> = {
             confirmButtonText: 'Complete Job',
             variant: 'default'
         }
-    ]
+    ],
+    BUSY: [
+        {
+            targetStatus: 'AVAILABLE',
+            label: 'Complete Task',
+            confirmTitle: 'Complete Task',
+            confirmMessage: 'Please confirm that all items have been assembled and inspected.',
+            confirmButtonText: 'Complete Job',
+            variant: 'default'
+        }
+    ],
+    INACTIVE: []
 };

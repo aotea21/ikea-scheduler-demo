@@ -1,5 +1,17 @@
 export type SkillLevel = 'EASY' | 'MEDIUM' | 'HARD';
 
+export type UserRole = 'ADMIN' | 'DISPATCHER' | 'ASSEMBLER';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  region?: string;
+  assembler_id?: string;
+}
+
+
 export interface Location {
   lat: number;
   lng: number;
@@ -109,12 +121,15 @@ export interface AssemblyTask {
   history: JobEvent[];
 }
 
-export type AssemblerStatus = 'OFFLINE' | 'AVAILABLE' | 'ASSIGNED' | 'EN_ROUTE' | 'WORKING';
+export type AssemblerStatus = 'OFFLINE' | 'AVAILABLE' | 'ASSIGNED' | 'EN_ROUTE' | 'WORKING' | 'BUSY' | 'INACTIVE';
 
 export interface Assembler {
   id: string; // UUID (user_id)
+  email?: string; // from profiles
   name: string;
   avatarUrl?: string;
+  phonePrimary?: string;
+  phoneSecondary?: string;
   rating: number;
   ratingCount: number;
   currentLocation: Location;
