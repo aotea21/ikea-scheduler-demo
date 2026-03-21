@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardLayout } from "@/components/features/DashboardLayout";
 import { useStore } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +46,7 @@ export default function AssemblersPage() {
     };
 
     return (
-        <DashboardLayout>
+        <>
             <div className="p-6 md:p-8 max-w-5xl mx-auto w-full">
                 <div className="flex items-center justify-between mb-6">
                     <div>
@@ -167,6 +166,6 @@ export default function AssemblersPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </DashboardLayout>
-    );
+        </>
+        );
 }

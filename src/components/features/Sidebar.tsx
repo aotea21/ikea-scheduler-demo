@@ -46,12 +46,12 @@ export function Sidebar() {
     return (
         <div className="hidden md:flex h-screen w-64 flex-col border-r bg-white">
             {/* Brand Header */}
-            <div className="flex h-16 items-center px-6 border-b">
+            <Link href="/" className="flex h-16 items-center px-6 border-b hover:bg-gray-50 transition-colors">
                 <div className="w-16 h-6 bg-[#0058a3] flex items-center justify-center rounded-sm">
                     <span className="text-[#fbd914] font-bold text-sm tracking-widest">IKEA</span>
                 </div>
                 <span className="ml-3 font-semibold text-gray-800 text-sm">Service</span>
-            </div>
+            </Link>
 
             {/* Navigation */}
             <nav className="flex-1 space-y-0.5 p-3 overflow-y-auto">

@@ -1,6 +1,5 @@
 "use client";
 
-import { DashboardLayout } from "@/components/features/DashboardLayout";
 import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import {
@@ -99,8 +98,7 @@ export default function SchedulePage() {
     // ─── Render ──────────────────────────────────────────────────────────────
 
     return (
-        <DashboardLayout>
-            <div className="flex flex-col h-full overflow-hidden bg-[#f8f9fa]">
+        <div className="flex flex-col h-full overflow-hidden bg-[#f8f9fa]">
 
                 {/* ════════ SUMMARY BAR ════════ */}
                 <div className="flex-none border-b bg-white px-5 py-3">
@@ -382,6 +380,5 @@ export default function SchedulePage() {
                     </div>
                 )}
             </div>
-        </DashboardLayout>
-    );
+        );
 }

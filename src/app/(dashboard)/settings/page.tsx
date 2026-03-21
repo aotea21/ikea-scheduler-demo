@@ -1,12 +1,10 @@
 "use client";
 
-import { DashboardLayout } from "@/components/features/DashboardLayout";
 import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
     return (
-        <DashboardLayout>
-            <div className="p-6 md:p-8 max-w-2xl mx-auto w-full">
+        <div className="p-6 md:p-8 max-w-2xl mx-auto w-full">
                 <h1 className="text-2xl font-bold mb-6 text-[#111111]">Settings</h1>
 
                 <div className="bg-white rounded-lg shadow-sm border p-6 space-y-6">
@@ -41,6 +39,5 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
-        </DashboardLayout>
-    );
+        );
 }

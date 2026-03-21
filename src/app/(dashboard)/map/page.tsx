@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from 'next/dynamic';
-import { DashboardLayout } from "@/components/features/DashboardLayout";
 import { AssignmentModal } from '@/components/features/AssignmentModal';
 
 const MapComponent = dynamic(
@@ -14,11 +13,11 @@ const MapComponent = dynamic(
 
 export default function MapPage() {
     return (
-        <DashboardLayout>
+        <>
             <div className="h-full w-full relative">
                 <MapComponent />
             </div>
             <AssignmentModal />
-        </DashboardLayout>
+        </>
     );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { DashboardLayout } from "@/components/features/DashboardLayout";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -720,21 +719,15 @@ export default function StatusPage() {
 
     if (isLoading) {
         return (
-            <DashboardLayout>
-                <div className="p-8 space-y-4 max-w-4xl mx-auto">
+            <div className="p-8 space-y-4 max-w-4xl mx-auto">
                     {[1, 2, 3].map(i => (
                         <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />
                     ))}
                 </div>
-            </DashboardLayout>
-        );
+            );
     }
 
     const isAdminOrDispatcher = profile?.role === 'ADMIN' || profile?.role === 'DISPATCHER';
 
-    return (
-        <DashboardLayout>
-            {isAdminOrDispatcher ? <AdminStatusView /> : <AssemblerStatusView />}
-        </DashboardLayout>
-    );
+    return isAdminOrDispatcher ? <AdminStatusView /> : <AssemblerStatusView />;
 }

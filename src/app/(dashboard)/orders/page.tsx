@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardLayout } from "@/components/features/DashboardLayout";
 import { useStore } from "@/lib/store";
 import {
     Table,
@@ -65,8 +64,7 @@ export default function OrdersPage() {
     };
 
     return (
-        <DashboardLayout>
-            <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+        <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
                         <h1 className="text-2xl font-bold text-[#111111]">All Orders</h1>
@@ -213,6 +211,5 @@ export default function OrdersPage() {
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
-        </DashboardLayout>
-    );
+        );
 }

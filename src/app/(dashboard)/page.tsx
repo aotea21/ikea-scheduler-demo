@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from 'next/dynamic';
-import { DashboardLayout } from '@/components/features/DashboardLayout';
 import { TaskList } from '@/components/features/TaskList';
 import { AssignmentModal } from '@/components/features/AssignmentModal';
 import React from 'react';
@@ -19,7 +18,7 @@ export default function Home() {
   const [view, setView] = React.useState<'list' | 'map'>('list');
 
   return (
-    <DashboardLayout>
+    <>
       <div className="flex h-full w-full relative">
         {/* Left Panel: Task List */}
         {/* Mobile: Show if view is list. Desktop: Always show. */}
@@ -60,6 +59,6 @@ export default function Home() {
 
       {/* Modal Overlay */}
       <AssignmentModal />
-    </DashboardLayout>
+    </>
   );
 }
