@@ -28,7 +28,7 @@ export function useAuth() {
 
     const fetchProfile = useCallback(async (userId: string) => {
         const { data } = await supabase
-            .from('profiles')
+            .from('users')
             .select('*')
             .eq('id', userId)
             .single();
