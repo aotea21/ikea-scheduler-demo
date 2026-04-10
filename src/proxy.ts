@@ -13,7 +13,7 @@ const ROLE_ROUTES: Record<string, string[]> = {
     '/map': ['ADMIN', 'DISPATCHER'],
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const response = NextResponse.next({ request });
 
