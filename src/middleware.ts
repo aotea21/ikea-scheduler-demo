@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
         if (requiredRoles) {
             // Fetch role from profiles table
             const { data: profile } = await supabase
-                .from('users')
+                .from('profiles')
                 .select('role')
                 .eq('id', user.id)
                 .single();
@@ -65,6 +65,6 @@ export const config = {
         // - favicon.ico
         // - public folder files
         // - manifest.json
-        '/((?!_next/static|_next/image|favicon.ico|manifest.json|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)).*)',
+        '/((?!_next/static|_next/image|favicon.ico|manifest.json|api/.*|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)).*)',
     ],
 };
