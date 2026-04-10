@@ -17,9 +17,11 @@ export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const response = NextResponse.next({ request });
 
-    // Always refresh session to keep it alive
+    // Use getSession() — reads JWT from cookie locally (no network call).
+    // This is much faster than getUser() which hits the Supabase Auth server.
     const supabase = createMiddlewareClient(request, response);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user ?? null;
 
     const isPublicRoute = PUBLIC_ROUTES.some(r => pathname.startsWith(r));
 
@@ -36,17 +38,12 @@ export async function proxy(request: NextRequest) {
     }
 
     // Role-based route protection
+    // Read role from JWT user_metadata (set during auth.admin.createUser)
+    // to avoid a DB round-trip on every request.
     if (user) {
         const requiredRoles = ROLE_ROUTES[pathname];
         if (requiredRoles) {
-            // Fetch role from profiles table
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', user.id)
-                .single();
-
-            const role = profile?.role ?? '';
+            const role = (user.user_metadata?.role as string) ?? '';
             if (!requiredRoles.includes(role)) {
                 // Redirect to home (or a 403 page)
                 return NextResponse.redirect(new URL('/', request.url));
@@ -65,6 +62,7 @@ export const config = {
         // - favicon.ico
         // - public folder files
         // - manifest.json
+        // - api routes (have their own auth)
         '/((?!_next/static|_next/image|favicon.ico|manifest.json|api/.*|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)).*)',
     ],
 };
