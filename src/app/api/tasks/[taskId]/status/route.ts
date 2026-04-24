@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import { TaskStatus, TaskActorType } from '@/lib/types';
+import { TaskStatus, TaskActorType, KITCHEN_REQUIRED_EVIDENCE } from '@/lib/types';
 import { validateTaskTransition, normalizeTaskStatus } from '@/lib/task-fsm';
+import { notifyCustomer, buildTrackingUrl, NotificationEvent } from '@/lib/notifications';
 
 interface StatusChangeBody {
     newStatus: TaskStatus;
@@ -32,7 +33,7 @@ export async function POST(
         // 1. Fetch current task status from DB
         const { data: task, error: fetchError } = await supabase
             .from('tasks')
-            .select('id, status')
+            .select('id, status, order_id')
             .eq('id', taskId)
             .single();
 
@@ -104,7 +105,71 @@ export async function POST(
             console.warn('task_events write skipped:', eventWriteError);
         }
 
-        // 5. Sync assembler status based on task transition
+        // 4a. Kitchen task evidence check: COMPLETED requires evidence photos
+        let isKitchenTask = false;
+        try {
+            const { data: taskMeta } = await supabase
+                .from('tasks')
+                .select('is_kitchen_task')
+                .eq('id', taskId)
+                .single();
+            isKitchenTask = taskMeta?.is_kitchen_task ?? false;
+        } catch {
+            // Column may not exist yet — skip kitchen check
+        }
+        if (newStatus === 'COMPLETED' && isKitchenTask) {
+            try {
+                const { data: evidence } = await supabase
+                    .from('task_evidence')
+                    .select('evidence_type')
+                    .eq('task_id', taskId);
+
+                const uploadedTypes = new Set(evidence?.map((e: { evidence_type: string }) => e.evidence_type) ?? []);
+                const missing = KITCHEN_REQUIRED_EVIDENCE.filter(t => !uploadedTypes.has(t));
+
+                if (missing.length > 0) {
+                    return NextResponse.json(
+                        {
+                            error: 'Missing required evidence photos for kitchen task completion',
+                            missingCategories: missing,
+                            required: KITCHEN_REQUIRED_EVIDENCE,
+                            uploaded: Array.from(uploadedTypes),
+                        },
+                        { status: 422 }
+                    );
+                }
+            } catch {
+                // task_evidence table may not exist yet — skip validation
+                console.warn('task_evidence check skipped (table may not exist)');
+            }
+        }
+
+        // 5. Notify customer (async, non-blocking)
+        const NOTIFICATION_EVENTS: TaskStatus[] = ['EN_ROUTE', 'ARRIVED', 'MATERIALS_VERIFIED', 'IN_PROGRESS', 'COMPLETED', 'VERIFIED'];
+        if (NOTIFICATION_EVENTS.includes(newStatus)) {
+            try {
+                const { data: order } = await supabase
+                    .from('orders')
+                    .select('id, customer_name, customer_phone, customer_email')
+                    .eq('id', task.order_id)
+                    .single();
+
+                if (order) {
+                    notifyCustomer({
+                        orderId: order.id,
+                        customerName: order.customer_name,
+                        customerPhone: order.customer_phone,
+                        customerEmail: order.customer_email,
+                        eventType: newStatus as NotificationEvent,
+                        trackingUrl: buildTrackingUrl(order.id),
+                    }).catch(err => console.warn('Notification failed:', err));
+                }
+            } catch {
+                console.warn('Customer notification skipped');
+            }
+        }
+
+        // 6. Sync assembler status based on task transition
         await syncAssemblerStatus(supabase, assemblerIds, newStatus, now);
 
         return NextResponse.json({
@@ -116,7 +181,8 @@ export async function POST(
         });
     } catch (error) {
         console.error('Error changing task status:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const message = error instanceof Error ? error.message : (error as any)?.message ?? 'Unknown error';
         return NextResponse.json(
             { error: 'Failed to change task status', message },
             { status: 500 }
@@ -144,6 +210,7 @@ async function syncAssemblerStatus(
             assemblerStatus = 'EN_ROUTE';
             break;
         case 'ARRIVED':
+        case 'MATERIALS_VERIFIED':
         case 'IN_PROGRESS':
             assemblerStatus = 'WORKING';
             break;

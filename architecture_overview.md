@@ -87,6 +87,17 @@ graph TD
 | **API 라우트** | Proxy를 거쳐 불필요한 지연 발생 | matcher에서 제외하여 직접 실행 |
 | **총 오버헤드** | **~400-1000ms / 요청** | **~1-5ms / 요청** |
 
+### 🛡️ Hydration 안정성 (suppressHydrationWarning)
+
+> [!NOTE]
+> **브라우저 확장 프로그램 대응**
+> `layout.tsx`의 `<html>` 및 `<body>` 태그에 `suppressHydrationWarning` 속성을 적용하여, 브라우저 확장 프로그램(예: Jetski, Grammarly 등)이 DOM에 주입하는 속성(`data-*` 등)으로 인한 React Hydration Mismatch 경고를 방지합니다.
+
+- **적용 범위**: `<html>`, `<body>` 태그에만 한정 (1-depth only)
+- **동작 원리**: React가 서버 렌더링 HTML과 클라이언트 DOM 비교 시, 해당 태그의 속성 차이를 무시
+- **안전성**: 자식 요소의 hydration 검증에는 영향을 주지 않으므로 실제 코드 버그는 정상적으로 감지됨
+- **참고**: Next.js 공식 권장 패턴 ([React Hydration Error](https://nextjs.org/docs/messages/react-hydration-error))
+
 ### 🎯 상태 관리 및 통제 모델 핵심 요약
 
 * **Finite State Machine (FSM) 상태 전이**
@@ -145,6 +156,7 @@ ikea-scheduler-platform/
 │   │   │   ├── status/         # Job Status — 역할별 분기 (Admin: 전체관리 / Assembler: My Jobs)
 │   │   │   ├── layout.tsx      # DashboardLayout (Sidebar + MobileNav 래퍼)
 │   │   │   └── page.tsx        # 대시보드 메인 홈 (Task List + Map 이중 패널)
+│   │   ├── layout.tsx          # RootLayout (suppressHydrationWarning 적용 — 확장 프로그램 대응)
 │   │   ├── api/                # Backend API 로직
 │   │   │   ├── admin/          #   └─ link-assembler: 프로필 연동
 │   │   │   ├── assemblers/     #   └─ GET/POST + [id]/PUT/DELETE (CRUD)

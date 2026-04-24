@@ -1,4 +1,4 @@
-import { Assembler, AssemblyTask, AssignmentRecommendation, SkillLevel } from './types';
+import { Assembler, AssemblyTask, AssignmentRecommendation, DomainSkill } from './types';
 
 // Helper: Calculate Haversine distance in km
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -18,26 +18,61 @@ function deg2rad(deg: number): number {
     return deg * (Math.PI / 180);
 }
 
-// Helper: Skill Level to numeric value
-const SKILL_VALUE = {
-    'EASY': 1,
-    'MEDIUM': 2,
-    'HARD': 3
-};
+/** Skills requiring NZ-licensed certification (plumber/electrician) */
+const LICENSED_SKILLS: DomainSkill[] = ['PLUMBING', 'ELECTRICAL'];
 
-function hasRequiredSkill(assembler: Assembler, requiredSkill: SkillLevel): boolean {
-    const requiredVal = SKILL_VALUE[requiredSkill];
-    // Check if assembler has any skill >= required
-    // Actually, assembler.skills is an array of skills they have.
-    // We assume if they have 'HARD', they can do 'EASY'.
-    // But strictly, let's look for exact or higher presence.
-    // Simplified: Max skill possessed.
-    const maxSkillVal = Math.max(...assembler.skills.map(s => SKILL_VALUE[s]));
-    return maxSkillVal >= requiredVal;
+/**
+ * Check if assembler has all required domain skills.
+ * For PLUMBING and ELECTRICAL, also verifies valid certification.
+ */
+function hasRequiredSkills(assembler: Assembler, requiredSkills: DomainSkill[]): boolean {
+    return requiredSkills.every(skill => {
+        // Must possess the skill
+        if (!assembler.skills.includes(skill)) return false;
+
+        // Licensed skills need valid certification
+        if (LICENSED_SKILLS.includes(skill)) {
+            const cert = assembler.certifications?.[skill];
+            if (!cert?.number) return false;
+            // Check certification expiry
+            if (cert.expiry && new Date(cert.expiry) < new Date()) return false;
+        }
+
+        return true;
+    });
+}
+
+/**
+ * Calculate skill match score (0–100).
+ * Exact match = 100, partial skills met = proportional, no match = 0.
+ */
+function calculateSkillScore(assembler: Assembler, requiredSkills: DomainSkill[]): number {
+    if (requiredSkills.length === 0) return 100; // No requirement = full score
+
+    const matchedCount = requiredSkills.filter(skill => {
+        if (!assembler.skills.includes(skill)) return false;
+        if (LICENSED_SKILLS.includes(skill)) {
+            const cert = assembler.certifications?.[skill];
+            if (!cert?.number) return false;
+            if (cert.expiry && new Date(cert.expiry) < new Date()) return false;
+        }
+        return true;
+    }).length;
+
+    return Math.round((matchedCount / requiredSkills.length) * 100);
 }
 
 
 export function generateRecommendations(task: AssemblyTask, assemblers: Assembler[], taskLocation: { lat: number, lng: number }): AssignmentRecommendation[] {
+    const requiredSkills = task.requiredSkills || [];
+    const isKitchen = task.isKitchenTask;
+
+    // Skill weight is higher for kitchen tasks (licensed trades required)
+    const skillWeight = isKitchen ? 0.5 : 0.4;
+    const distanceWeight = isKitchen ? 0.2 : 0.3;
+    const ratingWeight = 0.2;
+    const availabilityWeight = 0.1;
+
     return assemblers
         .filter(assembler => assembler.status !== 'OFFLINE')
         .map(assembler => {
@@ -48,17 +83,8 @@ export function generateRecommendations(task: AssemblyTask, assemblers: Assemble
                 taskLocation.lng
             );
 
-            // Scoring with normalized weights: skill(0.4) + distance(0.3) + rating(0.2) + availability(0.1)
-            let skillScore = 0;
-            const hasSkill = hasRequiredSkill(assembler, task.skillRequired);
-            if (hasSkill) {
-                // Bonus for exact skill match vs over-qualified
-                const maxSkillVal = Math.max(...assembler.skills.map(s => SKILL_VALUE[s]));
-                const requiredVal = SKILL_VALUE[task.skillRequired];
-                skillScore = maxSkillVal === requiredVal ? 100 : 75; // Exact match preferred
-            } else {
-                skillScore = 0; // Penalty applied via late-stage sort
-            }
+            const hasAllSkills = hasRequiredSkills(assembler, requiredSkills);
+            const skillScore = calculateSkillScore(assembler, requiredSkills);
 
             // Distance score (0–100): decays with distance
             const distanceScore = Math.max(0, 100 - distance * 2);
@@ -69,20 +95,35 @@ export function generateRecommendations(task: AssemblyTask, assemblers: Assemble
             // Availability score
             const availabilityScore = !assembler.activeTaskId ? 100 : 0;
 
-            // Weighted total
-            const totalScore = hasSkill
-                ? skillScore * 0.4 + distanceScore * 0.3 + ratingScore * 0.2 + availabilityScore * 0.1
+            // Weighted total — unqualified assemblers get heavy penalty
+            const totalScore = hasAllSkills
+                ? skillScore * skillWeight + distanceScore * distanceWeight + ratingScore * ratingWeight + availabilityScore * availabilityWeight
                 : -50; // Unqualified assemblers sink to bottom
 
-            const matchReasons = [];
+            const matchReasons: string[] = [];
             if (distance < 5) matchReasons.push('Nearby (<5km)');
             if (assembler.rating >= 4.8) matchReasons.push('Top Rated');
-            if (hasSkill && SKILL_VALUE[task.skillRequired] === Math.max(...assembler.skills.map(s => SKILL_VALUE[s]))) {
-                matchReasons.push('Perfect Skill Match');
-            }
+            if (hasAllSkills && skillScore === 100) matchReasons.push('Perfect Skill Match');
             if (!assembler.activeTaskId) matchReasons.push('Available');
-            if (!hasSkill) matchReasons.push('⚠️ Skill Gap');
+
+            // Warnings
+            if (!hasAllSkills) {
+                const missing = requiredSkills.filter(s => !assembler.skills.includes(s));
+                matchReasons.push(`⚠️ Missing: ${missing.join(', ')}`);
+            }
             if (assembler.activeTaskId) matchReasons.push('⚠️ Busy');
+
+            // Certification warnings for licensed skills
+            requiredSkills.forEach(skill => {
+                if (LICENSED_SKILLS.includes(skill)) {
+                    const cert = assembler.certifications?.[skill];
+                    if (assembler.skills.includes(skill) && !cert?.number) {
+                        matchReasons.push(`⚠️ ${skill}: No certification`);
+                    } else if (cert?.expiry && new Date(cert.expiry) < new Date()) {
+                        matchReasons.push(`⚠️ ${skill}: Cert expired`);
+                    }
+                }
+            });
 
             return {
                 assembler,

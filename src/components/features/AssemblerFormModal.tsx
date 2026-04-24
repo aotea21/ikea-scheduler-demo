@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { Assembler } from "@/lib/types";
+import { Assembler, DomainSkill } from "@/lib/types";
 
 interface AssemblerFormModalProps {
     isOpen: boolean;
@@ -12,7 +12,7 @@ interface AssemblerFormModalProps {
     assembler?: Assembler | null; // If provided, we are in Edit mode
 }
 
-const SKILL_OPTIONS = ['EASY', 'MEDIUM', 'HARD'];
+const SKILL_OPTIONS: DomainSkill[] = ['CABINETRY', 'PLUMBING', 'ELECTRICAL', 'MEASURING', 'COUNTERTOP'];
 
 export function AssemblerFormModal({ isOpen, onClose, assembler }: AssemblerFormModalProps) {
     const { addAssembler, updateAssembler } = useStore();
@@ -78,7 +78,7 @@ export function AssemblerFormModal({ isOpen, onClose, assembler }: AssemblerForm
                     email: formData.email,
                     phonePrimary: formData.phone,
                     currentLocation: { ...assembler.currentLocation, address: formData.region },
-                    skills: formData.skills as ('EASY' | 'MEDIUM' | 'HARD')[],
+                    skills: formData.skills as DomainSkill[],
                     status: formData.status as import('@/lib/types').AssemblerStatus
                 })
                 : await addAssembler({
@@ -86,7 +86,7 @@ export function AssemblerFormModal({ isOpen, onClose, assembler }: AssemblerForm
                     email: formData.email,
                     phonePrimary: formData.phone,
                     currentLocation: { lat: 0, lng: 0, address: formData.region },
-                    skills: formData.skills as ('EASY' | 'MEDIUM' | 'HARD')[],
+                    skills: formData.skills as DomainSkill[],
                 });
 
             if (success) {

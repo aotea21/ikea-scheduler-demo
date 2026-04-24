@@ -79,7 +79,10 @@ export async function POST(request: Request) {
             .insert({
                 id: `t-${Date.now()}`,
                 order_id: data.id,
-                skill_required: 'MEDIUM', // Defaulting to MEDIUM for now
+                skill_required: 'CABINETRY', // Default domain skill
+                required_domain_skills: ['CABINETRY'],
+                task_type: 'GENERAL_ASSEMBLY',
+                is_kitchen_task: false,
                 status: 'OPEN',
                 estimated_duration_minutes: 60, // Default to 1 hour
                 uuid: crypto.randomUUID()

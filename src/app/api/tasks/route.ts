@@ -37,7 +37,9 @@ export async function GET() {
             uuid: task.uuid,                 // expose real UUID for debugging
             orderId: task.order_id,
             status: task.status,
-            skillRequired: task.skill_required,
+            requiredSkills: task.required_domain_skills || ['CABINETRY'],
+            taskType: task.task_type || 'GENERAL_ASSEMBLY',
+            isKitchenTask: task.is_kitchen_task || false,
             scheduledStart: task.scheduled_start,
             scheduledEnd: task.scheduled_end,
             estimatedDurationMinutes: task.estimated_duration_minutes,

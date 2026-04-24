@@ -64,7 +64,7 @@ export default function SchedulePage() {
         enRoute:   assemblers.filter(a => a.status === 'EN_ROUTE').length,
         working:   assemblers.filter(a => a.status === 'WORKING').length,
         pending:   tasks.filter(t => ['CREATED', 'SCHEDULING'].includes(t.status)).length,
-        active:    tasks.filter(t => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'ARRIVED', 'IN_PROGRESS'].includes(t.status)).length,
+        active:    tasks.filter(t => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'ARRIVED', 'MATERIALS_VERIFIED', 'IN_PROGRESS'].includes(t.status)).length,
         issues:    tasks.filter(t => t.status === 'ISSUE').length,
         done:      tasks.filter(t => ['COMPLETED', 'VERIFIED', 'CANCELLED'].includes(t.status)).length,
     }), [tasks, assemblers]);
@@ -73,7 +73,7 @@ export default function SchedulePage() {
     const queueTasks = useMemo(() => {
         switch (activeQueueFilter) {
             case 'pending': return tasks.filter(t => ['CREATED', 'SCHEDULING'].includes(t.status));
-            case 'active':  return tasks.filter(t => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'ARRIVED', 'IN_PROGRESS'].includes(t.status));
+            case 'active':  return tasks.filter(t => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'ARRIVED', 'MATERIALS_VERIFIED', 'IN_PROGRESS'].includes(t.status));
             case 'issues':  return tasks.filter(t => t.status === 'ISSUE');
             case 'done':    return tasks.filter(t => ['COMPLETED', 'VERIFIED', 'CANCELLED'].includes(t.status));
             default:        return tasks;
@@ -178,7 +178,7 @@ export default function SchedulePage() {
                                             <div className="text-gray-500 truncate">{order?.customerName}</div>
                                             <div className="flex items-center gap-2 mt-1 text-gray-400">
                                                 <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{task.estimatedDurationMinutes}m</span>
-                                                <span className="flex items-center gap-0.5"><Wrench className="w-3 h-3" />{task.skillRequired}</span>
+                                                <span className="flex items-center gap-0.5"><Wrench className="w-3 h-3" />{task.requiredSkills?.join(', ')}</span>
                                             </div>
                                         </button>
                                     );
@@ -275,7 +275,7 @@ export default function SchedulePage() {
 
                                 <div className="flex flex-wrap gap-6 text-xs text-gray-500 mb-4">
                                     <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{selectedTask.estimatedDurationMinutes} min</span>
-                                    <span className="flex items-center gap-1"><Wrench className="w-3.5 h-3.5" />{selectedTask.skillRequired}</span>
+                                    <span className="flex items-center gap-1"><Wrench className="w-3.5 h-3.5" />{selectedTask.requiredSkills?.join(', ')}</span>
                                     {selectedTask.scheduledStart && (
                                         <span className="flex items-center gap-1">
                                             <Activity className="w-3.5 h-3.5" />

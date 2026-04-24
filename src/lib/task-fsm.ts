@@ -16,17 +16,18 @@ import { TaskStatus, TaskActorType } from './types';
  * Valid state transitions: from → [to...]
  */
 export const TASK_STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
-    CREATED:     ['SCHEDULING', 'CANCELLED'],
-    SCHEDULING:  ['ASSIGNED', 'CANCELLED'],
-    ASSIGNED:    ['CONFIRMED', 'CANCELLED'],
-    CONFIRMED:   ['EN_ROUTE', 'CANCELLED'],
-    EN_ROUTE:    ['ARRIVED', 'ISSUE', 'CANCELLED'],
-    ARRIVED:     ['IN_PROGRESS', 'ISSUE'],
-    IN_PROGRESS: ['COMPLETED', 'ISSUE'],
-    COMPLETED:   ['VERIFIED'],
-    VERIFIED:    [],
-    ISSUE:       ['ASSIGNED', 'CANCELLED'],
-    CANCELLED:   [],
+    CREATED:              ['SCHEDULING', 'CANCELLED'],
+    SCHEDULING:           ['ASSIGNED', 'CANCELLED'],
+    ASSIGNED:             ['CONFIRMED', 'CANCELLED'],
+    CONFIRMED:            ['EN_ROUTE', 'CANCELLED'],
+    EN_ROUTE:             ['ARRIVED', 'ISSUE', 'CANCELLED'],
+    ARRIVED:              ['MATERIALS_VERIFIED', 'IN_PROGRESS', 'ISSUE'],
+    MATERIALS_VERIFIED:   ['IN_PROGRESS', 'ISSUE'],
+    IN_PROGRESS:          ['COMPLETED', 'ISSUE'],
+    COMPLETED:            ['VERIFIED'],
+    VERIFIED:             [],
+    ISSUE:                ['ASSIGNED', 'CANCELLED'],
+    CANCELLED:            [],
 };
 
 /**
@@ -34,25 +35,28 @@ export const TASK_STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
  * Key: "FROM→TO", Value: allowed actor types
  */
 export const TASK_TRANSITION_ACTORS: Record<string, TaskActorType[]> = {
-    'CREATED→SCHEDULING':   ['system', 'admin'],
-    'SCHEDULING→ASSIGNED':  ['system', 'admin'],
-    'ASSIGNED→CONFIRMED':   ['assembler'],
-    'ASSIGNED→CANCELLED':   ['admin'],
-    'CONFIRMED→EN_ROUTE':   ['assembler'],
-    'CONFIRMED→CANCELLED':  ['admin'],
-    'EN_ROUTE→ARRIVED':     ['assembler'],
-    'EN_ROUTE→ISSUE':       ['assembler'],
-    'EN_ROUTE→CANCELLED':   ['admin'],
-    'ARRIVED→IN_PROGRESS':  ['assembler'],
-    'ARRIVED→ISSUE':        ['assembler'],
-    'IN_PROGRESS→COMPLETED':['assembler'],
-    'IN_PROGRESS→ISSUE':    ['assembler'],
-    'COMPLETED→VERIFIED':   ['admin'],
-    'ISSUE→ASSIGNED':       ['admin'],
-    'ISSUE→CANCELLED':      ['admin'],
+    'CREATED→SCHEDULING':            ['system', 'admin'],
+    'SCHEDULING→ASSIGNED':           ['system', 'admin'],
+    'ASSIGNED→CONFIRMED':            ['assembler'],
+    'ASSIGNED→CANCELLED':            ['admin'],
+    'CONFIRMED→EN_ROUTE':            ['assembler'],
+    'CONFIRMED→CANCELLED':           ['admin'],
+    'EN_ROUTE→ARRIVED':              ['assembler'],
+    'EN_ROUTE→ISSUE':                ['assembler'],
+    'EN_ROUTE→CANCELLED':            ['admin'],
+    'ARRIVED→MATERIALS_VERIFIED':    ['assembler'],  // Kitchen: verify materials on-site
+    'ARRIVED→IN_PROGRESS':           ['assembler'],  // Non-kitchen: direct start
+    'ARRIVED→ISSUE':                 ['assembler'],
+    'MATERIALS_VERIFIED→IN_PROGRESS':['assembler'],  // Kitchen: start after materials OK
+    'MATERIALS_VERIFIED→ISSUE':      ['assembler'],
+    'IN_PROGRESS→COMPLETED':         ['assembler'],
+    'IN_PROGRESS→ISSUE':             ['assembler'],
+    'COMPLETED→VERIFIED':            ['admin'],
+    'ISSUE→ASSIGNED':                ['admin'],
+    'ISSUE→CANCELLED':               ['admin'],
     // Fallback: admin can always cancel
-    'CREATED→CANCELLED':    ['admin'],
-    'SCHEDULING→CANCELLED': ['admin'],
+    'CREATED→CANCELLED':             ['admin'],
+    'SCHEDULING→CANCELLED':          ['admin'],
 };
 
 /**
@@ -134,7 +138,7 @@ export function isTerminalStatus(status: TaskStatus): boolean {
  * Check if a task is actively being worked on by an assembler
  */
 export function isActiveTask(status: TaskStatus): boolean {
-    return ['CONFIRMED', 'EN_ROUTE', 'ARRIVED', 'IN_PROGRESS'].includes(status);
+    return ['CONFIRMED', 'EN_ROUTE', 'ARRIVED', 'MATERIALS_VERIFIED', 'IN_PROGRESS'].includes(status);
 }
 
 /**

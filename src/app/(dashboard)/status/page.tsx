@@ -231,8 +231,8 @@ function TaskCard({
                     <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2.5">
                         <Wrench className="w-4 h-4 text-gray-400 flex-shrink-0" />
                         <div>
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Difficulty</p>
-                            <p className="text-sm font-semibold text-gray-800">{task.skillRequired}</p>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Skills</p>
+                            <p className="text-sm font-semibold text-gray-800">{task.requiredSkills?.join(', ')}</p>
                         </div>
                     </div>
                     {task.scheduledStart && (
@@ -361,7 +361,7 @@ function AssemblerGroupCard({
         STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)
     );
     const issueCount = tasks.filter(t => t.status === 'ISSUE').length;
-    const activeCount = tasks.filter(t => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'IN_PROGRESS'].includes(t.status)).length;
+    const activeCount = tasks.filter(t => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'IN_PROGRESS', 'MATERIALS_VERIFIED'].includes(t.status)).length;
 
     const statusColor =
         issueCount > 0 ? 'bg-red-50 border-red-200' :
@@ -451,7 +451,7 @@ function AdminStatusView() {
     }, [fetchData, subscribeToChanges]);
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'issue'>('active');
 
-    const ACTIVE_STATUSES = useMemo<TaskStatus[]>(() => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'IN_PROGRESS', 'ISSUE'], []);
+    const ACTIVE_STATUSES = useMemo<TaskStatus[]>(() => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'IN_PROGRESS', 'MATERIALS_VERIFIED', 'ISSUE'], []);
 
     // Build per-assembler task map
     const assemblerTaskMap = useMemo(() => {
@@ -620,7 +620,7 @@ function AssemblerStatusView() {
         return { assembler: assemblers[0] ?? null, assemblerTasks: tasks };
     }, [profile, tasks, assemblers]);
 
-    const ACTIVE_STATUSES = useMemo<TaskStatus[]>(() => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'IN_PROGRESS', 'ISSUE'], []);
+    const ACTIVE_STATUSES = useMemo<TaskStatus[]>(() => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'MATERIALS_VERIFIED', 'IN_PROGRESS', 'ISSUE'], []);
     const DONE_STATUSES = useMemo<TaskStatus[]>(() => ['COMPLETED', 'VERIFIED', 'CANCELLED', 'CREATED'], []);
 
     const filteredTasks = useMemo(() => {

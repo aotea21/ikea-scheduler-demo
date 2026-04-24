@@ -1,4 +1,19 @@
-export type SkillLevel = 'EASY' | 'MEDIUM' | 'HARD';
+export type DomainSkill = 'CABINETRY' | 'PLUMBING' | 'ELECTRICAL' | 'MEASURING' | 'COUNTERTOP';
+
+export type TaskType =
+  | 'MEASURING'          // 사전 실측
+  | 'DELIVERY'           // 자재 배송
+  | 'CABINET_INSTALL'    // 캐비닛 설치
+  | 'PLUMBING_INSTALL'   // 배관 작업
+  | 'ELECTRICAL_INSTALL' // 전기 작업
+  | 'COUNTERTOP_INSTALL' // 상판 설치
+  | 'FINISHING'          // 마감 작업
+  | 'GENERAL_ASSEMBLY';  // 일반 가구 조립 (레거시 호환)
+
+export type EvidenceType = 'LEVELING' | 'PLUMBING_CONNECTION' | 'SILICONE_FINISH' | 'ELECTRICAL_CONNECTION' | 'OVERALL' | 'ISSUE_PHOTO';
+
+/** Required evidence categories for kitchen task completion */
+export const KITCHEN_REQUIRED_EVIDENCE: EvidenceType[] = ['LEVELING', 'SILICONE_FINISH', 'OVERALL'];
 
 export type UserRole = 'ADMIN' | 'DISPATCHER' | 'ASSEMBLER';
 
@@ -28,6 +43,10 @@ export interface Item {
   name: string;
   sku: string;
   quantity: number;
+  // Kitchen Planner Integration (제안 3)
+  kitchenDesignCode?: string;  // IKEA Home Planner 설계 코드
+  plannerPdfUrl?: string;      // PDF 도면 링크
+  plannerData?: Record<string, unknown>; // 3D 데이터 메타정보
 }
 
 export interface Order {
@@ -54,17 +73,18 @@ export interface Order {
 }
 
 export type TaskStatus =
-  | 'CREATED'       // 주문 접수, 배정 전
-  | 'SCHEDULING'    // 시스템이 배정 중
-  | 'ASSIGNED'      // Assembler에게 배정됨
-  | 'CONFIRMED'     // Assembler가 수락함
-  | 'EN_ROUTE'      // Assembler 이동 중
-  | 'ARRIVED'       // 현장 도착
-  | 'IN_PROGRESS'   // 조립 작업 중
-  | 'COMPLETED'     // 작업 완료
-  | 'VERIFIED'      // Admin 검수 완료
-  | 'ISSUE'         // 문제 발생
-  | 'CANCELLED';    // 취소됨
+  | 'CREATED'              // 주문 접수, 배정 전
+  | 'SCHEDULING'           // 시스템이 배정 중
+  | 'ASSIGNED'             // Assembler에게 배정됨
+  | 'CONFIRMED'            // Assembler가 수락함
+  | 'EN_ROUTE'             // Assembler 이동 중
+  | 'ARRIVED'              // 현장 도착
+  | 'MATERIALS_VERIFIED'   // 자재 배송 확인됨 (Kitchen)
+  | 'IN_PROGRESS'          // 조립 작업 중
+  | 'COMPLETED'            // 작업 완료
+  | 'VERIFIED'             // Admin 검수 완료
+  | 'ISSUE'                // 문제 발생
+  | 'CANCELLED';           // 취소됨
 
 export type TaskActorType = 'assembler' | 'admin' | 'system';
 
@@ -103,7 +123,9 @@ export interface AssemblyTask {
   id: string; // UUID
   orderId: string;
   status: TaskStatus;
-  skillRequired: SkillLevel; // SQL column
+  requiredSkills: DomainSkill[]; // Domain-specific skills
+  taskType: TaskType;            // 작업 유형
+  isKitchenTask: boolean;        // Kitchen 작업 여부
 
   // Planning
   scheduledStart?: Date;
@@ -116,7 +138,7 @@ export interface AssemblyTask {
   assignedAssemblerIds: string[];
   createdAt: Date;
 
-  // UI fields (no direct DB column yet)
+  // UI fields
   estimatedDurationMinutes: number;
   history: JobEvent[];
 }
@@ -135,7 +157,8 @@ export interface Assembler {
   currentLocation: Location;
 
   // Relations
-  skills: SkillLevel[];
+  skills: DomainSkill[];          // Domain-specific skills
+  certifications: Record<string, { number: string; expiry: string }>; // skill → cert info
   availability: TimeRange[];
 
   activeTaskId: string | null;

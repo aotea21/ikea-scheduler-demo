@@ -78,7 +78,10 @@ async function seed() {
         const taskInserts = MOCK_TASKS.map(t => ({
             id: t.id,
             order_id: t.orderId,
-            skill_required: t.skillRequired,
+            skill_required: t.requiredSkills?.[0] ?? 'CABINETRY',
+            required_domain_skills: t.requiredSkills ?? ['CABINETRY'],
+            task_type: t.taskType ?? 'GENERAL_ASSEMBLY',
+            is_kitchen_task: t.isKitchenTask ?? false,
             status: t.status,
             scheduled_start: t.scheduledStart,
             scheduled_end: t.scheduledEnd,
