@@ -1,6 +1,7 @@
 "use client";
 
 import { useStore } from "@/lib/store";
+import { useIndexedData } from "@/hooks/useIndexedData";
 import { useEffect, useState, useCallback } from "react";
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
@@ -120,6 +121,7 @@ export default function MapComponent({
     onTaskClick,
 }: MapComponentProps = {}) {
     const { tasks, assemblers, orders, selectedTaskId, selectTask } = useStore();
+    const { ordersById } = useIndexedData();
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => { setTimeout(() => setIsMounted(true), 0); }, []);
@@ -144,7 +146,7 @@ export default function MapComponent({
 
     // Determine fly-to target
     const selectedTask      = tasks.find(t => t.id === selectedTaskId);
-    const selectedOrder     = selectedTask ? orders.find(o => o.id === selectedTask.orderId) : null;
+    const selectedOrder     = selectedTask ? ordersById.get(selectedTask.orderId) ?? null : null;
     const flyLat = selectedOrder?.address?.lat ?? null;
     const flyLng = selectedOrder?.address?.lng ?? null;
 
@@ -199,7 +201,7 @@ export default function MapComponent({
 
                 {/* ── Task Markers ── */}
                 {tasks.map((t: AssemblyTask) => {
-                    const order = orders.find(o => o.id === t.orderId);
+                    const order = ordersById.get(t.orderId);
                     if (!order) return null;
                     const lat = order.address?.lat;
                     const lng = order.address?.lng;

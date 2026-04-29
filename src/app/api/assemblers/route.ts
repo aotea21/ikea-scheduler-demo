@@ -14,16 +14,25 @@ export async function GET() {
     const supabase = await createClient();
 
     try {
-        // Fetch assemblers with GeoJSON conversion for location
-        const { data: assemblers, error: assemblersError } = await supabase
-            .rpc('get_assemblers_with_location')
+        // Fetch all data in parallel (was sequential: RPC → skills → profiles)
+        const [assemblersResult, skillsResult, profilesResult] = await Promise.all([
+            supabase.rpc('get_assemblers_with_location'),
+            supabase.from('assembler_skills').select('assembler_id, skill'),
+            supabase.from('profiles').select('assembler_id, email').eq('role', 'ASSEMBLER'),
+        ]);
 
-        if (assemblersError) {
-            // Fallback: fetch without location conversion
-            const fallback = await supabase.from('assemblers').select('*')
-            if (fallback.error) throw fallback.error
+        if (assemblersResult.error) {
+            // Fallback: basic query without RPC
+            const fallback = await supabase.from('assemblers').select('*');
+            if (fallback.error) throw fallback.error;
 
-            const { data: skills } = await supabase.from('assembler_skills').select('*')
+            // Build skills index
+            const skillsMap = new Map<string, string[]>();
+            for (const s of skillsResult.data ?? []) {
+                const list = skillsMap.get(s.assembler_id);
+                if (list) list.push(s.skill);
+                else skillsMap.set(s.assembler_id, [s.skill]);
+            }
 
             return NextResponse.json(fallback.data?.map(a => ({
                 id: a.user_id,
@@ -31,44 +40,45 @@ export async function GET() {
                 avatar: a.avatar_url || '',
                 phonePrimary: a.phone_primary,
                 phoneSecondary: a.phone_secondary,
-                skills: skills?.filter(s => s.assembler_id === a.user_id).map(s => s.skill) || [],
+                skills: skillsMap.get(a.user_id) ?? [],
                 rating: a.rating,
                 ratingCount: a.rating_count,
                 status: a.status,
                 currentLocation: { lat: -36.85, lng: 174.76, address: a.address_line || 'Auckland' },
-                activeTaskId: a.active_task_uuid || a.active_task_id, // Map from new UUID column or legacy
+                activeTaskId: a.active_task_uuid || a.active_task_id,
                 isActive: a.status === 'AVAILABLE'
-            })))
+            })));
         }
 
-        // Fetch skills (graceful fallback)
-        const { data: skills, error: skillsError } = await supabase.from('assembler_skills').select('*')
-        if (skillsError) {
-            console.warn('Failed to fetch assembler_skills (table might be missing), continuing without skills:', skillsError.message)
+        const assemblers = assemblersResult.data;
+        const skills = skillsResult.data;
+        const profilesData = profilesResult.data ?? [];
+
+        // Pre-index skills by assembler ID — O(S) build, O(1) lookup
+        const skillsMap = new Map<string, string[]>();
+        for (const s of skills ?? []) {
+            const list = skillsMap.get(s.assembler_id);
+            if (list) list.push(s.skill);
+            else skillsMap.set(s.assembler_id, [s.skill]);
         }
 
-        // Fetch profiles to get email addresses
-        let profilesData: { assembler_id: string; email: string }[] = [];
-        try {
-            const { data } = await supabase.from('profiles').select('assembler_id, email').eq('role', 'ASSEMBLER');
-            profilesData = data || [];
-        } catch (e) {
-            console.warn('Failed to fetch profiles for emails', e);
+        // Pre-index profiles by assembler ID
+        const profileMap = new Map<string, string>();
+        for (const p of profilesData) {
+            if (p.assembler_id) profileMap.set(p.assembler_id, p.email);
         }
 
-        // Combine assemblers with their skills, location, and email
+        // Combine — all lookups are now O(1)
         const assemblersWithSkills = assemblers?.map((assembler: Record<string, unknown>) => {
             const asmId = assembler.user_id as string;
-            const profile = profilesData.find(p => p.assembler_id === asmId);
-            
             return {
                 id: asmId,
-                email: profile?.email || '',
+                email: profileMap.get(asmId) ?? '',
                 name: assembler.name as string,
                 avatar: (assembler.avatar_url as string) || '',
                 phonePrimary: assembler.phone_primary as string,
                 phoneSecondary: assembler.phone_secondary as string,
-                skills: skills?.filter(s => s.assembler_id === asmId).map(s => s.skill) || [],
+                skills: skillsMap.get(asmId) ?? [],
                 rating: assembler.rating as number,
                 ratingCount: assembler.rating_count as number,
                 status: assembler.status as string,

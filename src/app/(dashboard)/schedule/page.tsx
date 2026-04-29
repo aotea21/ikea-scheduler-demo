@@ -1,6 +1,7 @@
 "use client";
 
 import { useStore } from "@/lib/store";
+import { useIndexedData } from "@/hooks/useIndexedData";
 import { Button } from "@/components/ui/button";
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -49,6 +50,7 @@ const ASSEMBLER_STATUS_CONFIG: Record<AssemblerStatus, { color: string; bg: stri
 
 export default function SchedulePage() {
     const { tasks, assemblers, orders, transitionTaskStatus, selectedTaskId, selectTask } = useStore();
+    const { ordersById, tasksByAssemblerId } = useIndexedData();
 
     const ADMIN_ID = 'admin-001';
 
@@ -158,7 +160,7 @@ export default function SchedulePage() {
                                     <div className="p-6 text-center text-gray-400 text-xs">No tasks</div>
                                 )}
                                 {queueTasks.map(task => {
-                                    const order = orders.find(o => o.id === task.orderId);
+                                    const order = ordersById.get(task.orderId);
                                     const isSelected = selectedTaskId === task.id;
                                     return (
                                         <button
@@ -214,7 +216,7 @@ export default function SchedulePage() {
                             {assemblers.map(a => {
                                 const cfg = ASSEMBLER_STATUS_CONFIG[a.status];
                                 const isSelected = selectedAssemblerId === a.id;
-                                const activeTasks = tasks.filter(t => t.assignedAssemblerIds.includes(a.id) && !['COMPLETED', 'VERIFIED', 'CANCELLED'].includes(t.status));
+                                const activeTasks = (tasksByAssemblerId.get(a.id) ?? []).filter(t => !['COMPLETED', 'VERIFIED', 'CANCELLED'].includes(t.status));
                                 return (
                                     <button
                                         key={a.id}
@@ -357,7 +359,7 @@ export default function SchedulePage() {
                                     return myTasks.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
                                             {myTasks.map(t => {
-                                                const o = orders.find(o => o.id === t.orderId);
+                                                const o = ordersById.get(t.orderId);
                                                 return (
                                                     <button
                                                         key={t.id}

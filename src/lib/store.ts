@@ -41,6 +41,9 @@ import { createClient } from '@/lib/supabase/client';
 // Create a singleton client instance for the store
 const supabase = createClient();
 
+// Guard against duplicate realtime subscriptions
+let activeChannel: ReturnType<typeof supabase.channel> | null = null;
+
 export const useStore = create<AppStore>((set, get) => ({
     assemblers: [],
     tasks: [],
@@ -287,6 +290,11 @@ export const useStore = create<AppStore>((set, get) => ({
     },
 
     subscribeToChanges: () => {
+        // Prevent duplicate subscriptions
+        if (activeChannel) {
+            return () => {}; // Already subscribed, return no-op
+        }
+
         const channel = supabase
             .channel('realtime-updates')
             .on(
@@ -359,8 +367,11 @@ export const useStore = create<AppStore>((set, get) => ({
             )
             .subscribe();
 
+        activeChannel = channel;
+
         return () => {
             supabase.removeChannel(channel);
+            activeChannel = null;
         };
     },
 

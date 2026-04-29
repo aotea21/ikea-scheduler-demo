@@ -41,7 +41,7 @@ export default function Home() {
         {/* Mobile View Toggle (Floating) */}
         <div className="md:hidden absolute bottom-20 left-1/2 -translate-x-1/2 z-[500]">
           <button
-            onClick={() => setView(view === 'list' ? 'map' : 'list')}
+            onClick={() => React.startTransition(() => setView(view === 'list' ? 'map' : 'list'))}
             className="bg-[#111111] text-white px-6 py-3 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 animate-in slide-in-from-bottom-5"
           >
             {view === 'list' ? (

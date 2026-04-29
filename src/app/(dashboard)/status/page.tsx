@@ -1,6 +1,7 @@
 "use client";
 
 import { useStore } from "@/lib/store";
+import { useIndexedData } from "@/hooks/useIndexedData";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,15 +127,16 @@ type StoreTransition = ReturnType<typeof useStore.getState>['transitionTaskStatu
 
 function TaskCard({
     task,
-    order,
     assemblerActorId,
     onTransition,
+    ordersById,
     compact = false,
 }: {
     task: StoreTasks[number];
-    order: StoreOrders[number] | undefined;
+    order?: StoreOrders[number] | undefined;
     assemblerActorId: string;
     onTransition: StoreTransition;
+    ordersById: Map<string, StoreOrders[number]>;
     compact?: boolean;
 }) {
     const [showHistory, setShowHistory] = useState(false);
@@ -145,6 +147,7 @@ function TaskCard({
         ),
         [task.history]
     );
+    const order = ordersById.get(task.orderId);
 
     const borderColor =
         task.status === 'ISSUE'      ? 'border-l-red-500' :
@@ -349,11 +352,13 @@ function AssemblerGroupCard({
     assembler,
     tasks,
     orders,
+    ordersById,
     onTransition,
 }: {
     assembler: StoreTasks[number] extends { id: string } ? { id: string; name: string; status: string; avatar?: string } : never;
     tasks: StoreTasks;
     orders: StoreOrders;
+    ordersById: Map<string, StoreOrders[number]>;
     onTransition: StoreTransition;
 }) {
     const [expanded, setExpanded] = useState(true);
@@ -414,14 +419,14 @@ function AssemblerGroupCard({
             {expanded && tasks.length > 0 && (
                 <div className="border-t divide-y">
                     {sorted.map(task => {
-                        const order = orders.find(o => o.id === task.orderId);
                         return (
                             <TaskCard
                                 key={task.id}
                                 task={task}
-                                order={order}
+                                order={undefined as never}
                                 assemblerActorId={assembler.id}
                                 onTransition={onTransition}
+                                ordersById={ordersById}
                                 compact
                             />
                         );
@@ -441,25 +446,20 @@ function AssemblerGroupCard({
 // ─── Admin/Dispatcher: Full Status View ────────────────────────────────────────
 
 function AdminStatusView() {
-    const { tasks, orders, assemblers, transitionTaskStatus, fetchData, subscribeToChanges } = useStore();
+    const { tasks, orders, assemblers, transitionTaskStatus } = useStore();
+    const { ordersById, tasksByAssemblerId } = useIndexedData();
     const [search, setSearch] = useState('');
 
-    useEffect(() => {
-        fetchData();
-        const unsubscribe = subscribeToChanges();
-        return unsubscribe;
-    }, [fetchData, subscribeToChanges]);
+    // Data fetching & realtime subscriptions are handled by DataInitializer
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'issue'>('active');
 
     const ACTIVE_STATUSES = useMemo<TaskStatus[]>(() => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'IN_PROGRESS', 'MATERIALS_VERIFIED', 'ISSUE'], []);
 
-    // Build per-assembler task map
+    // Build per-assembler task map using pre-indexed lookup (O(1) per assembler)
     const assemblerTaskMap = useMemo(() => {
         const map = new Map<string, StoreTasks>();
         for (const asm of assemblers) {
-            const asmTasks = tasks.filter(t =>
-                t.assignedAssemblerIds?.includes(asm.id)
-            );
+            const asmTasks = tasksByAssemblerId.get(asm.id) ?? [];
             // Apply status filter
             const filtered = statusFilter === 'all' ? asmTasks :
                 statusFilter === 'active' ? asmTasks.filter(t => ACTIVE_STATUSES.includes(t.status)) :
@@ -467,7 +467,7 @@ function AdminStatusView() {
             map.set(asm.id, filtered);
         }
         return map;
-    }, [tasks, assemblers, statusFilter, ACTIVE_STATUSES]);
+    }, [assemblers, tasksByAssemblerId, statusFilter, ACTIVE_STATUSES]);
 
     // Unassigned tasks
     const unassignedTasks = useMemo(() =>
@@ -584,6 +584,7 @@ function AdminStatusView() {
                             assembler={asm as Parameters<typeof AssemblerGroupCard>[0]['assembler']}
                             tasks={asmTasks}
                             orders={orders}
+                            ordersById={ordersById}
                             onTransition={transitionTaskStatus}
                         />
                     );
@@ -598,27 +599,22 @@ function AdminStatusView() {
 type TabFilter = 'active' | 'done';
 
 function AssemblerStatusView() {
-    const { tasks, orders, assemblers, transitionTaskStatus, fetchData, subscribeToChanges } = useStore();
+    const { tasks, orders, assemblers, transitionTaskStatus } = useStore();
+    const { ordersById, tasksByAssemblerId } = useIndexedData();
     const { profile, isLoading: authLoading } = useAuth();
 
-    useEffect(() => {
-        fetchData();
-        const unsubscribe = subscribeToChanges();
-        return unsubscribe;
-    }, [fetchData, subscribeToChanges]);
+    // Data fetching & realtime subscriptions are handled by DataInitializer
     const [tab, setTab] = useState<TabFilter>('active');
 
     const { assembler, assemblerTasks } = useMemo(() => {
         if (!profile) return { assembler: null, assemblerTasks: [] };
         if (profile.role === 'ASSEMBLER' && profile.assembler_id) {
             const asm = assemblers.find(a => a.id === profile.assembler_id);
-            const myTasks = tasks.filter(t =>
-                t.assignedAssemblerIds?.includes(profile.assembler_id!) ?? false
-            );
+            const myTasks = tasksByAssemblerId.get(profile.assembler_id) ?? [];
             return { assembler: asm ?? null, assemblerTasks: myTasks };
         }
         return { assembler: assemblers[0] ?? null, assemblerTasks: tasks };
-    }, [profile, tasks, assemblers]);
+    }, [profile, tasks, assemblers, tasksByAssemblerId]);
 
     const ACTIVE_STATUSES = useMemo<TaskStatus[]>(() => ['ASSIGNED', 'CONFIRMED', 'EN_ROUTE', 'MATERIALS_VERIFIED', 'IN_PROGRESS', 'ISSUE'], []);
     const DONE_STATUSES = useMemo<TaskStatus[]>(() => ['COMPLETED', 'VERIFIED', 'CANCELLED', 'CREATED'], []);
@@ -696,14 +692,14 @@ function AssemblerStatusView() {
                     </div>
                 )}
                 {!authLoading && filteredTasks.map(task => {
-                    const order = orders.find(o => o.id === task.orderId);
                     return (
                         <TaskCard
                             key={task.id}
                             task={task}
-                            order={order}
+                            order={undefined as never}
                             assemblerActorId={actorId}
                             onTransition={transitionTaskStatus}
+                            ordersById={ordersById}
                         />
                     );
                 })}

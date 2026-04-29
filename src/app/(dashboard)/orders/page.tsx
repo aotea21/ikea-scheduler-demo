@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useStore } from "@/lib/store";
 import {
     Table,
@@ -32,6 +32,15 @@ export default function OrdersPage() {
     const [editingOrder, setEditingOrder] = useState<import('@/lib/types').Order | null>(null);
     const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Pagination
+    const PAGE_SIZE = 25;
+    const [page, setPage] = useState(0);
+    const paginatedOrders = useMemo(() =>
+        orders.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
+        [orders, page]
+    );
+    const totalPages = Math.ceil(orders.length / PAGE_SIZE);
 
     const handleDelete = async (orderId: string) => {
         setIsDeleting(true);
@@ -97,8 +106,8 @@ export default function OrdersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {orders.map((order) => (
-                                    <TableRow key={order.id} className="hover:bg-blue-50/50 transition-colors">
+                                {paginatedOrders.map((order) => (
+                                    <TableRow key={order.id} className="hover:bg-blue-50/50 transition-colors" style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 48px' }}>
                                         <TableCell className="font-medium text-[#0058a3]">
                                             #{order.id.slice(0, 8).toUpperCase()}
                                         </TableCell>
@@ -172,6 +181,36 @@ export default function OrdersPage() {
                             </div>
                         ) : null}
                     </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
+                            <p className="text-sm text-gray-600">
+                                Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, orders.length)} of {orders.length}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page === 0}
+                                    onClick={() => setPage(p => p - 1)}
+                                >
+                                    Previous
+                                </Button>
+                                <span className="text-sm text-gray-500">
+                                    {page + 1} / {totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page >= totalPages - 1}
+                                    onClick={() => setPage(p => p + 1)}
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </Card>
 
                 <CreateOrderModal

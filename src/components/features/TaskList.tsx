@@ -1,6 +1,7 @@
 "use client";
 
 import { useStore } from "@/lib/store";
+import { useIndexedData } from "@/hooks/useIndexedData";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,10 +9,8 @@ import { Clock, MapPin, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function TaskList() {
-    const { tasks, orders, selectTask, selectedTaskId } = useStore();
-
-    // Helper to get Order details for a task
-    const getOrder = (orderId: string) => orders.find((o) => o.id === orderId);
+    const { tasks, selectTask, selectedTaskId } = useStore();
+    const { ordersById } = useIndexedData();
 
     return (
         <div className="flex flex-col h-full p-4 space-y-4 max-w-md w-full bg-white border-r">
@@ -22,7 +21,7 @@ export function TaskList() {
 
             <div className="space-y-3 overflow-y-auto pr-2">
                 {tasks.map((task) => {
-                    const order = getOrder(task.orderId);
+                    const order = ordersById.get(task.orderId);
                     if (!order) return null;
 
                     const isSelected = selectedTaskId === task.id;

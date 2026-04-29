@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -7,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Star, MapPin, Plus, Mail, Phone, Edit2, Trash2 } from "lucide-react";
+import Image from "next/image";
 import { AssemblerFormModal } from "@/components/features/AssemblerFormModal";
 import { Assembler } from "@/lib/types";
 import {
@@ -89,7 +89,7 @@ export default function AssemblersPage() {
 
                                 <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center relative shadow-sm border border-gray-200">
                                     {assembler.avatarUrl ? (
-                                        <img src={assembler.avatarUrl} alt={assembler.name} className="w-full h-full rounded-full object-cover" />
+                                        <Image src={assembler.avatarUrl} alt={assembler.name} width={80} height={80} className="rounded-full object-cover" />
                                     ) : (
                                         <span className="text-gray-400 text-xl font-bold">
                                             {assembler.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}

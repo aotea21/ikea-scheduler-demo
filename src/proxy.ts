@@ -44,8 +44,9 @@ export async function proxy(request: NextRequest) {
         const requiredRoles = ROLE_ROUTES[pathname];
         if (requiredRoles) {
             const role = (user.user_metadata?.role as string) ?? '';
-            if (!requiredRoles.includes(role)) {
-                // Redirect to home (or a 403 page)
+            // If role is set and doesn't match → block.
+            // If role is empty (legacy account) → allow through (page-level auth will handle).
+            if (role && !requiredRoles.includes(role)) {
                 return NextResponse.redirect(new URL('/', request.url));
             }
         }
