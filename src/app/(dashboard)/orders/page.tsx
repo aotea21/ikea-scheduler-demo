@@ -152,6 +152,7 @@ export default function OrdersPage() {
                                                         setIsCreateModalOpen(true);
                                                     }}
                                                     title="Edit order"
+                                                    aria-label="Edit order"
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
@@ -161,6 +162,7 @@ export default function OrdersPage() {
                                                     className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
                                                     onClick={() => setDeletingOrderId(order.id)}
                                                     title="Delete order"
+                                                    aria-label="Delete order"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

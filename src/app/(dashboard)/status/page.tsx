@@ -149,6 +149,11 @@ function TaskCard({
     );
     const order = ordersById.get(task.orderId);
 
+    const latestIssueEvent = task.status === 'ISSUE' 
+        ? history.find(h => h.newStatus === 'ISSUE' && (h.description || h.metadata?.notes))
+        : null;
+    const issueReason = latestIssueEvent ? (latestIssueEvent.description || latestIssueEvent.metadata?.notes as string) : null;
+
     const borderColor =
         task.status === 'ISSUE'      ? 'border-l-red-500' :
         task.status === 'COMPLETED' || task.status === 'VERIFIED' ? 'border-l-green-500' :
@@ -158,43 +163,51 @@ function TaskCard({
     if (compact) {
         // Compact row for Admin/Dispatcher view
         return (
-            <div className={`flex items-center gap-3 py-3 px-4 border-l-4 ${borderColor} bg-white hover:bg-gray-50 transition-colors`}>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-gray-800">
-                            Order #{(order?.id ?? task.orderId).slice(0, 7).toUpperCase()}
-                        </span>
-                        {order && <span className="text-xs text-gray-500">{order.customerName}</span>}
-                    </div>
-                    {order?.address?.address && (
-                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-                            <MapPin className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{order.address.address}</span>
-                        </p>
-                    )}
-                    {task.scheduledStart && (
-                        <p className="text-xs text-blue-500 mt-0.5" suppressHydrationWarning>
-                            {new Date(task.scheduledStart).toLocaleString('en-NZ', {
-                                weekday: 'short', month: 'short', day: 'numeric',
-                                hour: '2-digit', minute: '2-digit'
-                            })}
-                        </p>
-                    )}
-                </div>
-                <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <TaskStatusBadge status={task.status} />
-                    {actions.length > 0 && (
-                        <div className="flex gap-1 flex-wrap justify-end">
-                            {actions.map(action => (
-                                <AssemblerActionButton
-                                    key={action.targetStatus}
-                                    action={action}
-                                    onClick={() => onTransition(task.id, action.targetStatus, 'admin', assemblerActorId)}
-                                />
-                            ))}
+            <div className={`flex flex-col border-l-4 ${borderColor} bg-white hover:bg-gray-50 transition-colors`}>
+                <div className="flex items-center gap-3 py-3 px-4">
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-semibold text-gray-800">
+                                Order #{(order?.id ?? task.orderId).slice(0, 7).toUpperCase()}
+                            </span>
+                            {order && <span className="text-xs text-gray-500">{order.customerName}</span>}
                         </div>
-                    )}
+                        {order?.address?.address && (
+                            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                <MapPin className="w-3 h-3 flex-shrink-0" />
+                                <span className="truncate">{order.address.address}</span>
+                            </p>
+                        )}
+                        {task.scheduledStart && (
+                            <p className="text-xs text-blue-500 mt-0.5" suppressHydrationWarning>
+                                {new Date(task.scheduledStart).toLocaleString('en-NZ', {
+                                    weekday: 'short', month: 'short', day: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                })}
+                            </p>
+                        )}
+                    </div>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <TaskStatusBadge status={task.status} />
+                        {actions.length > 0 && (
+                            <div className="flex gap-1 flex-wrap justify-end">
+                                {actions.map(action => (
+                                    <AssemblerActionButton
+                                        key={action.targetStatus}
+                                        action={action}
+                                        onClick={() => onTransition(task.id, action.targetStatus, 'admin', assemblerActorId)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
+                {task.status === 'ISSUE' && issueReason && (
+                    <div className="bg-red-50 px-4 py-2 text-sm text-red-800 border-t border-red-100 flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <span><strong>Issue:</strong> {issueReason}</span>
+                    </div>
+                )}
             </div>
         );
     }
@@ -221,6 +234,13 @@ function TaskCard({
                     <TaskStatusBadge status={task.status} />
                 </div>
             </CardHeader>
+
+            {task.status === 'ISSUE' && issueReason && (
+                <div className="bg-red-50 px-4 py-3 text-sm text-red-800 border-b border-red-100 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span><strong>Issue:</strong> {issueReason}</span>
+                </div>
+            )}
 
             <CardContent className="p-4 space-y-4">
                 <div className="grid grid-cols-2 gap-3">

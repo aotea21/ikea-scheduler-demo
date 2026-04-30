@@ -26,6 +26,11 @@ export function TaskList() {
 
                     const isSelected = selectedTaskId === task.id;
 
+                    const latestIssueEvent = task.status === 'ISSUE' 
+                        ? [...(task.history ?? [])].sort((a, b) => new Date(b.eventTime).getTime() - new Date(a.eventTime).getTime()).find(h => h.newStatus === 'ISSUE' && (h.description || h.metadata?.notes))
+                        : null;
+                    const issueReason = latestIssueEvent ? (latestIssueEvent.description || latestIssueEvent.metadata?.notes as string) : null;
+
                     return (
                         <Card
                             key={task.id}
@@ -66,6 +71,12 @@ export function TaskList() {
                                     </div>
                                 </div>
 
+                                {task.status === 'ISSUE' && issueReason && (
+                                    <div className="mt-2 text-xs text-red-700 bg-red-50 p-2 rounded border border-red-100 truncate">
+                                        <strong>Issue:</strong> {issueReason}
+                                    </div>
+                                )}
+
                                 {task.status === 'CREATED' && (
                                     <Button
                                         size="sm"
@@ -81,7 +92,7 @@ export function TaskList() {
 
                                 {task.status === 'ASSIGNED' && (
                                     <div className="mt-2 flex items-center justify-between">
-                                        <div className="text-xs font-medium text-green-600 bg-green-50 p-2 rounded flex items-center gap-2 flex-1 mr-2">
+                                        <div className="text-xs font-medium text-green-800 bg-green-50 p-2 rounded flex items-center gap-2 flex-1 mr-2">
                                             <div className="w-2 h-2 rounded-full bg-green-500" />
                                             Assigned ({task.assignedAssemblerIds?.length || 0})
                                         </div>

@@ -76,12 +76,14 @@ export default function AssemblersPage() {
                                     <button 
                                         onClick={() => handleEditClick(assembler)}
                                         className="p-1.5 text-gray-400 hover:text-[#0058a3] hover:bg-blue-50 rounded-md transition-colors"
+                                        aria-label="Edit assembler"
                                     >
                                         <Edit2 className="w-4 h-4" />
                                     </button>
                                     <button 
                                         onClick={() => setDeletingId(assembler.id)}
                                         className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                        aria-label="Delete assembler"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -101,10 +103,10 @@ export default function AssemblersPage() {
                                     <h3 className="font-bold text-lg text-gray-900 truncate px-4">{assembler.name}</h3>
                                     <div className="flex justify-center items-center gap-2">
                                         <Badge variant="outline" className={`text-[10px] font-bold ${
-                                            assembler.status === 'AVAILABLE' ? 'text-green-700 bg-green-50 border-green-200' :
-                                            assembler.status === 'WORKING' ? 'text-purple-700 bg-purple-50 border-purple-200' :
-                                            assembler.status === 'EN_ROUTE' ? 'text-orange-700 bg-orange-50 border-orange-200' :
-                                            'text-gray-600 bg-gray-50 border-gray-200'
+                                            assembler.status === 'AVAILABLE' ? 'text-green-800 bg-green-50 border-green-200' :
+                                            assembler.status === 'WORKING' ? 'text-purple-800 bg-purple-50 border-purple-200' :
+                                            assembler.status === 'EN_ROUTE' ? 'text-orange-800 bg-orange-50 border-orange-200' :
+                                            'text-gray-800 bg-gray-50 border-gray-200'
                                         }`}>
                                             {assembler.status}
                                         </Badge>
@@ -133,7 +135,7 @@ export default function AssemblersPage() {
 
                                 <div className="flex flex-wrap gap-1.5 justify-center mt-2">
                                     {assembler.skills.map(skill => (
-                                        <Badge key={skill} variant="secondary" className="text-[10px] bg-white border border-gray-200">
+                                        <Badge key={skill} variant="secondary" className="text-[10px] bg-white border border-gray-200 text-gray-800">
                                             {skill}
                                         </Badge>
                                     ))}

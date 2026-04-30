@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://ikea-scheduler-demo.vercel.app/sitemap.xml

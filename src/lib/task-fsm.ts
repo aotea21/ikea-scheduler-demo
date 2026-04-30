@@ -26,7 +26,7 @@ export const TASK_STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
     IN_PROGRESS:          ['COMPLETED', 'ISSUE'],
     COMPLETED:            ['VERIFIED'],
     VERIFIED:             [],
-    ISSUE:                ['ASSIGNED', 'CANCELLED'],
+    ISSUE:                ['ASSIGNED', 'EN_ROUTE', 'ARRIVED', 'IN_PROGRESS', 'CANCELLED'],
     CANCELLED:            [],
 };
 
@@ -37,22 +37,25 @@ export const TASK_STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
 export const TASK_TRANSITION_ACTORS: Record<string, TaskActorType[]> = {
     'CREATED→SCHEDULING':            ['system', 'admin'],
     'SCHEDULING→ASSIGNED':           ['system', 'admin'],
-    'ASSIGNED→CONFIRMED':            ['assembler'],
+    'ASSIGNED→CONFIRMED':            ['assembler', 'admin'],
     'ASSIGNED→CANCELLED':            ['admin'],
-    'CONFIRMED→EN_ROUTE':            ['assembler'],
+    'CONFIRMED→EN_ROUTE':            ['assembler', 'admin'],
     'CONFIRMED→CANCELLED':           ['admin'],
-    'EN_ROUTE→ARRIVED':              ['assembler'],
-    'EN_ROUTE→ISSUE':                ['assembler'],
+    'EN_ROUTE→ARRIVED':              ['assembler', 'admin'],
+    'EN_ROUTE→ISSUE':                ['assembler', 'admin'],
     'EN_ROUTE→CANCELLED':            ['admin'],
-    'ARRIVED→MATERIALS_VERIFIED':    ['assembler'],  // Kitchen: verify materials on-site
-    'ARRIVED→IN_PROGRESS':           ['assembler'],  // Non-kitchen: direct start
-    'ARRIVED→ISSUE':                 ['assembler'],
-    'MATERIALS_VERIFIED→IN_PROGRESS':['assembler'],  // Kitchen: start after materials OK
-    'MATERIALS_VERIFIED→ISSUE':      ['assembler'],
-    'IN_PROGRESS→COMPLETED':         ['assembler'],
-    'IN_PROGRESS→ISSUE':             ['assembler'],
+    'ARRIVED→MATERIALS_VERIFIED':    ['assembler', 'admin'],  // Kitchen: verify materials on-site
+    'ARRIVED→IN_PROGRESS':           ['assembler', 'admin'],  // Non-kitchen: direct start
+    'ARRIVED→ISSUE':                 ['assembler', 'admin'],
+    'MATERIALS_VERIFIED→IN_PROGRESS':['assembler', 'admin'],  // Kitchen: start after materials OK
+    'MATERIALS_VERIFIED→ISSUE':      ['assembler', 'admin'],
+    'IN_PROGRESS→COMPLETED':         ['assembler', 'admin'],
+    'IN_PROGRESS→ISSUE':             ['assembler', 'admin'],
     'COMPLETED→VERIFIED':            ['admin'],
     'ISSUE→ASSIGNED':                ['admin'],
+    'ISSUE→EN_ROUTE':                ['admin'],
+    'ISSUE→ARRIVED':                 ['admin'],
+    'ISSUE→IN_PROGRESS':             ['admin'],
     'ISSUE→CANCELLED':               ['admin'],
     // Fallback: admin can always cancel
     'CREATED→CANCELLED':             ['admin'],

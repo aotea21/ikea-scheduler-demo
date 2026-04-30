@@ -154,7 +154,7 @@ export function CreateOrderModal({ isOpen, onClose, order, onSuccess }: CreateOr
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b bg-gray-50">
                     <h2 className="text-xl font-bold text-[#111111]">{order ? 'Edit Order' : 'Create New Order'}</h2>
-                    <Button variant="ghost" size="icon" onClick={onClose} type="button">
+                    <Button variant="ghost" size="icon" onClick={onClose} type="button" aria-label="Close modal">
                         <X className="h-5 w-5" />
                     </Button>
                 </div>
@@ -305,6 +305,7 @@ export function CreateOrderModal({ isOpen, onClose, order, onSuccess }: CreateOr
                                                 size="icon"
                                                 onClick={() => removeItem(idx)}
                                                 className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                aria-label="Remove item"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
