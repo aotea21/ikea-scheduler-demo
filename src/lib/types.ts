@@ -70,6 +70,7 @@ export interface Order {
   serviceFee: number;
   notes?: string;
   deliveryDate: string; // Keeping for UI display convenience
+  createdAt?: string;   // DB created_at for latest-first sorting
 }
 
 export type TaskStatus =

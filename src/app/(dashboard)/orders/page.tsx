@@ -25,6 +25,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 export default function OrdersPage() {
     const { orders, fetchOrders, isLoading } = useStore();
@@ -33,14 +34,38 @@ export default function OrdersPage() {
     const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const [activeTab, setActiveTab] = useState<'active' | 'history' | 'all'>('active');
+
+    // Sort all orders by createdAt DESC (latest first)
+    const sortedOrders = useMemo(() =>
+        [...orders].sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+        }),
+        [orders]
+    );
+
+    const activeOrders  = useMemo(() => sortedOrders.filter(o => o.status === 'PENDING' || o.status === 'CONFIRMED'), [sortedOrders]);
+    const historyOrders = useMemo(() => sortedOrders.filter(o => o.status === 'DELIVERED' || o.status === 'CANCELLED'), [sortedOrders]);
+
+    const displayedOrders = activeTab === 'active' ? activeOrders
+        : activeTab === 'history' ? historyOrders
+        : sortedOrders;
+
     // Pagination
     const PAGE_SIZE = 25;
     const [page, setPage] = useState(0);
     const paginatedOrders = useMemo(() =>
-        orders.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
-        [orders, page]
+        displayedOrders.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
+        [displayedOrders, page]
     );
-    const totalPages = Math.ceil(orders.length / PAGE_SIZE);
+    const totalPages = Math.ceil(displayedOrders.length / PAGE_SIZE);
+
+    const handleTabChange = (tab: 'active' | 'history' | 'all') => {
+        setActiveTab(tab);
+        setPage(0);
+    };
 
     const handleDelete = async (orderId: string) => {
         setIsDeleting(true);
@@ -74,18 +99,51 @@ export default function OrdersPage() {
 
     return (
         <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-bold text-[#111111]">All Orders</h1>
-                        <Badge variant="outline" className="text-sm px-3 py-1">
-                            Total Orders: {orders.length}
-                        </Badge>
-                    </div>
-                    <Button onClick={() => setIsCreateModalOpen(true)} className="bg-[#0058a3] hover:bg-[#004f93]">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Order
-                    </Button>
+            {/* Page header */}
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                    <h1 className="text-2xl font-bold text-[#111111]">Orders</h1>
+                    <Badge variant="outline" className="text-sm px-3 py-1">
+                        Total: {orders.length}
+                    </Badge>
                 </div>
+                <Button onClick={() => setIsCreateModalOpen(true)} className="bg-[#0058a3] hover:bg-[#004f93]">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Order
+                </Button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 mb-5 border-b border-gray-200">
+                {(
+                    [
+                        { key: 'active',  label: 'Active',  count: activeOrders.length },
+                        { key: 'history', label: 'History', count: historyOrders.length },
+                        { key: 'all',     label: 'All',     count: sortedOrders.length },
+                    ] as const
+                ).map(({ key, label, count }) => (
+                    <button
+                        key={key}
+                        onClick={() => handleTabChange(key)}
+                        className={cn(
+                            'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors',
+                            activeTab === key
+                                ? 'border-[#0058a3] text-[#0058a3]'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        )}
+                    >
+                        {label}
+                        <span className={cn(
+                            'inline-flex items-center justify-center rounded-full text-xs font-semibold px-2 py-0.5 min-w-[20px]',
+                            activeTab === key
+                                ? 'bg-[#0058a3] text-white'
+                                : 'bg-gray-100 text-gray-600'
+                        )}>
+                            {count}
+                        </span>
+                    </button>
+                ))}
+            </div>
 
                 <Card className="bg-white overflow-hidden shadow-sm border border-gray-200">
                     <div className="overflow-x-auto">
@@ -176,10 +234,10 @@ export default function OrdersPage() {
                             <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
                                 <p className="text-lg font-medium">Loading orders...</p>
                             </div>
-                        ) : orders.length === 0 ? (
+                        ) : displayedOrders.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500">
                                 <p className="text-lg font-medium">No orders found</p>
-                                <p className="text-sm">Click &apos;Create Order&apos; to add a new order.</p>
+                                <p className="text-sm">{activeTab === 'active' ? 'No active orders at the moment.' : activeTab === 'history' ? 'No historical orders yet.' : "Click 'Create Order' to add a new order."}</p>
                             </div>
                         ) : null}
                     </div>
@@ -188,7 +246,7 @@ export default function OrdersPage() {
                     {totalPages > 1 && (
                         <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
                             <p className="text-sm text-gray-600">
-                                Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, orders.length)} of {orders.length}
+                                Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, displayedOrders.length)} of {displayedOrders.length}
                             </p>
                             <div className="flex items-center gap-2">
                                 <Button

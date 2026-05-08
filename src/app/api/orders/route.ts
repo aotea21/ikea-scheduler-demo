@@ -16,6 +16,7 @@ export async function GET() {
             const { data: fallback, error: fallbackError } = await supabase
                 .from('orders')
                 .select('*')
+                .order('created_at', { ascending: false })
 
             if (fallbackError) throw fallbackError
 
@@ -35,7 +36,8 @@ export async function GET() {
                 serviceFee: order.service_fee,
                 notes: order.notes,
                 status: order.status,
-                estimatedTime: 120
+                estimatedTime: 120,
+                createdAt: order.created_at,
             })))
         }
 
@@ -58,7 +60,8 @@ export async function GET() {
             serviceFee: (order.service_fee as number) || 0,
             notes: order.notes,
             status: order.status,
-            estimatedTime: 120
+            estimatedTime: 120,
+            createdAt: order.created_at,
         }))
 
         return NextResponse.json(ordersFormatted)
